@@ -1606,10 +1606,11 @@ describe("factory workflow: 0.5.1 the AI governance guardrail", () => {
     // must still hold the run.
     const unread = await run({ issue: 5 }, { spec: tripped, "guardrail:read": read("", label, [stop("2026-11-02T10:00:00Z"), stop("2026-11-04T10:00:00Z", "collaborator", "none", false)]) });
     expect(unread.labels).not.toContain("build");
-    // The factory's own stop, posted under an identity whose permission is
-    // unread, still dates the stop, so an owner relabel after it clears.
-    const own = await run({ issue: 5 }, { spec: tripped, "guardrail:read": read("", label, [stop("2026-11-02T10:00:00Z", "session-bot", "none", false)]) });
-    expect(own.labels).toContain("build");
+    // Fable, round two: an unread stop blocks but never clears. A stranger's
+    // unread stop before the label is not a go-ahead: clearing needs at least
+    // one stop from a verified writer, the factory's own.
+    const strangerFirst = await run({ issue: 5 }, { spec: tripped, "guardrail:read": read("", label, [stop("2026-11-02T10:00:00Z", "stranger", "none", false)]) });
+    expect(strangerFirst.labels).not.toContain("build");
     // An owner read that is not the repo's owner gives the owner's stop no
     // writer standing, but it was unread, so it still counts as a stop.
     const notOwner = await run({ issue: 5 }, { spec: tripped, "guardrail:read": { ...read("", label, [stop("2026-11-04T10:00:00Z", "someone", "none", false)]), ownerLogin: "someone" } });
@@ -2140,19 +2141,16 @@ describe("factory workflow: 0.6.3 the owner of a user repository", () => {
     for (const k of ["ownerType", "ownerLogin"]) expect(c.opts.schema.required).toContain(k);
   });
 
-  test("a guardrail stop whose author's permission is unreadable counts as a stop, on a user or an organisation repository", async () => {
+  test("a guardrail stop the owner posted counts when its author's permission is unreadable", async () => {
     const tripped = { ...SPEC_OK, guardrail: [{ trigger: "law", reason: "r" }] };
     const ownerStop = { author: "O", createdAt: "2026-11-02T10:00:00Z", permission: "none", permissionRead: false };
     const answer = (owner) => ({ read: true, stops: [ownerStop], readyLabelledAt: "2026-11-03T09:00:00Z", ...owner });
     const cleared = await run({ issue: 5 }, { spec: tripped, "guardrail:read": answer(OWNER) });
     expect(cleared.result).toMatchObject({ decision: "approved", guardrailCleared: ["law"] });
-    // On an organisation repository the unread stop still counts as a stop
-    // and dates it: a relabel after it (whose applier intake checks) clears,
-    // one before it stops again.
+    // On an organisation repository an unread stop is no verified writer's,
+    // so it cannot clear.
     const org = await run({ issue: 5 }, { spec: tripped, "guardrail:read": answer({ ownerType: "Organization", ownerLogin: "o" }) });
-    expect(org.result).toMatchObject({ decision: "approved", guardrailCleared: ["law"] });
-    const orgLater = await run({ issue: 5 }, { spec: tripped, "guardrail:read": { ...answer({ ownerType: "Organization", ownerLogin: "o" }), stops: [{ ...ownerStop, createdAt: "2026-11-04T10:00:00Z" }] } });
-    expect(orgLater.result).toMatchObject({ decision: "escalated", label: "ready-for-human" });
+    expect(org.result).toMatchObject({ decision: "escalated", label: "ready-for-human" });
   });
 
   test("one function decides who is a writer: the script reads WRITERS in exactly one place", () => {

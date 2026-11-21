@@ -666,14 +666,17 @@ if (tripped.length) {
     },
   )
   const at = (t) => (typeof t === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(t) ? Date.parse(t) : NaN)
-  // A stop counts unless its author was read as below write and is not the
-  // owner: a writer's stop counts (writer(), as everywhere), and so does one
-  // whose permission could not be read, since an unread permission is doubt
-  // and doubt stops. The latest one dates the stop.
-  const stops = history && Array.isArray(history.stops) ? history.stops.filter((x) => x && (x.permissionRead !== true || writer(x.author, x.permission, x.permissionRead, history))) : []
+  // A stop blocks unless its author was read as below write and is not the
+  // owner: a writer's stop (writer(), as everywhere) and one whose permission
+  // could not be read both block, since doubt stops, and the latest dates the
+  // stop. Only a writer's stop can clear: an unread one blocks but is never
+  // the stop a relabel answers, so a stranger's comment cannot stand in for
+  // the factory's own.
+  const isWriter = (x) => writer(x.author, x.permission, x.permissionRead, history)
+  const stops = history && Array.isArray(history.stops) ? history.stops.filter((x) => x && (x.permissionRead !== true || isWriter(x))) : []
   const stopAt = stops.length ? Math.max(...stops.map((x) => at(x.createdAt))) : NaN
   const labelledAt = history ? at(history.readyLabelledAt) : NaN
-  const cleared = Boolean(history && history.read && labelledAt > stopAt)
+  const cleared = Boolean(history && history.read && stops.some(isWriter) && labelledAt > stopAt)
   if (!cleared) {
     return await finish({ decision: 'escalated', label: 'ready-for-human', guardrail: tripped, reason: `AI governance guardrail: ${tripped.map((g) => `${g.trigger} (${g.reason})`).join('; ')}. Relabel ready-for-agent to go ahead.` })
   }

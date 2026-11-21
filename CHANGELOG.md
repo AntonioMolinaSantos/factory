@@ -21,8 +21,10 @@
 - **A stop whose author's permission cannot be read counts as a stop.** Only
   a stop from an author read as below write, and not the owner, is dropped.
   Doubt stops: a write collaborator's stop in a cloud session, where the
-  permission call answers 403, still holds the run, and the factory's own
-  stop still dates the stop so a later relabel can clear it.
+  permission call answers 403, still holds the run. An unread stop blocks
+  but never clears: a relabel clears only when at least one stop is a
+  verified writer's, so a stranger's comment cannot stand in for the
+  factory's own.
 - **Unchanged, fail closed:** an organisation repository, or any login other
   than the user owner, still needs the permission read, and a failed read
   refuses as before. A permission the intake did not report as read
