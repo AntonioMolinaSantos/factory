@@ -1,5 +1,53 @@
 # Changelog
 
+## 0.6.2 (21 November 2026)
+
+- **Every grill loads less, and no rule or check is lost.** What a grill
+  always reads (the ux-grill skill and the convention) falls from about
+  7,200 tokens to about 5,300.
+  - The checklists by hand ("How each rule is checked") move to
+    `plugin/docs/conventions/ux-checklists.md`. The convention and the skill
+    say to read it only for a rule whose skill is not installed, or not at
+    the vetted version, and for the three checks no skill makes: R1's states
+    against the data model, R4's decoration over text, R6's focus under
+    sticky parts.
+  - The convention's "Sources" moves into
+    `plugin/docs/research/ux-rules-sources.md`, as "In short"; the
+    convention keeps one line pointing there.
+  - "Skills that draw and polish" leaves the convention: the guidance lives
+    once, in the skill's "Borrowed skills", with every condition the
+    convention carried, and the convention keeps a one-line pointer.
+  - The method's reference to the R2 grading of target sizes now points to
+    the checklists. The script names no moved section and is unchanged.
+- **A token budget, enforced on every pull request.** `npm run budget`
+  (`scripts/token-budget.mjs`, no dependency) estimates tokens as
+  characters divided by 4 for the always-read set, each file read on
+  demand and the factory script; it prints a Markdown table, or JSON with
+  `--json`. `budget.json` holds the ceiling for the always-read set: 5,500,
+  the measured 5,266 rounded up to the next 250.
+  `tests/token-budget.test.mjs` fails when the set goes over it; a
+  deliberate growth raises the ceiling in the same pull request.
+
+### Token cost
+
+From `npm run budget`, characters divided by 4, rounded up per file. The
+0.6.1 column ran the same script on the 0.6.1 tree.
+
+| Set | File | 0.6.1 | 0.6.2 |
+| --- | --- | ---: | ---: |
+| Always read, every grill | `plugin/skills/ux-grill/SKILL.md` | 2,195 | 2,362 |
+| Always read, every grill | `plugin/docs/conventions/ux-design.md` | 5,003 | 2,904 |
+| Always read, every grill | **Total** | **7,198** | **5,266** |
+| Read on demand | `plugin/docs/conventions/ux-checklists.md` | absent | 1,338 |
+| Read on demand | `plugin/docs/research/ux-rules-sources.md` | 7,053 | 7,560 |
+| Read on demand | `plugin/docs/research/drawing-skills.md` | 4,399 | 4,399 |
+| Read on demand | `plugin/docs/method/factory.md` | 10,021 | 10,031 |
+| Read on demand | **Total** | **21,473** | **23,328** |
+| The factory script | `plugin/workflows/factory.js` | 23,431 | 23,431 |
+
+The skill grows by about 170 tokens because it now carries the drawing
+skills' conditions the convention held; the convention sheds about 2,100.
+
 ## 0.6.1 (21 November 2026)
 
 - **The nine UI/UX rules are checked against their primary sources**
