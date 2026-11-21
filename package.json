@@ -1,0 +1,21 @@
+{
+  "name": "factory",
+  "private": true,
+  "description": "One GitHub issue in, one reviewed pull request out: a Claude Code plugin.",
+  "license": "Apache-2.0",
+  "author": "Antonio Molina",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AntonioMolinaSantos/factory.git"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "4.1.11"
+  }
+}
