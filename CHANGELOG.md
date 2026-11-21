@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- **The nine UI/UX rules are checked against their primary sources**
+  (`plugin/docs/research/ux-rules-sources.md`). Three change wording: R2
+  (reflow down to 320 px, targets of 44 by 44 px with the inline exception),
+  R4 (3 to 1 for controls and their states), R9 (a confirmation only where
+  the action cannot be undone). The count stays nine.
+- **The grill borrows existing skills, each for one job**, and works without
+  them: the convention gains "How each rule is checked", a checklist by hand
+  per rule beside the skill that does it when installed.
+
 ## 0.6.0, 21 November 2026
 
 First public release, extracted from the private repository where the

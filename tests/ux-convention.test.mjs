@@ -160,4 +160,51 @@ describe("the UI/UX convention in this repo", () => {
     expect(skill).toContain("docs/conventions/ux-design.md");
     expect(skill).not.toMatch(/\| R1 \|/);
   });
+
+  // The rules were checked against primary texts (plugin/docs/research/ux-rules-sources.md).
+  // The convention points to the findings, and the findings judge every rule it names.
+  test("the convention cites its sources, and the findings carry a verdict for every rule", () => {
+    const doc = read("plugin", "docs", "conventions", "ux-design.md");
+    expect(doc).toMatch(/^## Sources$/m);
+    expect(doc).toContain("../research/ux-rules-sources.md");
+    const findings = read("plugin", "docs", "research", "ux-rules-sources.md");
+    for (const rule of RULES) {
+      const start = findings.search(new RegExp(`^### ${rule}: `, "m"));
+      expect(start, rule).toBeGreaterThan(-1);
+      const body = findings.slice(start + 1).split(/^### /m)[0];
+      expect(body, rule).toMatch(/^\| Verdict \| \*\*(supported|needs correction|unsupported)\*\*/m);
+    }
+    // Every source says how far it was read: nothing is passed off as read.
+    const sources = findings.split(/^## Sources$/m)[1] ?? "";
+    const rows = sources.split("\n").filter((l) => /^\| (?!Source|---)/.test(l));
+    expect(rows.length).toBeGreaterThan(0);
+    for (const row of rows) expect(row).toMatch(/read in full|read in part|second-hand|not read, from memory/);
+    expect(doc + findings).not.toMatch(/[\u2013\u2014]/);
+  });
+
+  // The grill borrows skills that already exist, each for one job, and works without
+  // them: the convention keeps a checklist by hand for every rule. The checklist is a
+  // list, never a second table: the factory reads the rule ids off table rows.
+  test("every rule has a checklist by hand, and the grill names each borrowed skill with its fallback", () => {
+    const doc = read("plugin", "docs", "conventions", "ux-design.md");
+    const start = doc.search(/^## How each rule is checked$/m);
+    expect(start).toBeGreaterThan(-1);
+    const part = doc.slice(start + 1).split(/^## /m)[0];
+    for (const rule of RULES) {
+      const line = part.split("\n\n").find((b) => b.startsWith(`- **${rule}.**`));
+      expect(line, rule).toBeTruthy();
+      expect(line, rule).toMatch(/By hand:/);
+    }
+    expect([...doc.matchAll(/^\| (R\d+) \|/gm)].map((m) => m[1])).toEqual(RULES);
+    const skill = read("plugin", "skills", "ux-grill", "SKILL.md");
+    const borrowed = ["mattpocock-skills:research", "mattpocock-skills:grilling", "design:design-critique", "design:accessibility-review", "design:ux-copy", "design:design-system"];
+    for (const name of borrowed) {
+      expect(skill, name).toContain(`\`${name}\``);
+      expect(doc, name).toContain(`\`${name}\``);
+    }
+    expect(skill).toMatch(/if it is installed/);
+    expect(skill).toMatch(/How each rule is checked/);
+    expect(skill).not.toMatch(/By hand:/);
+    expect(doc + skill).not.toMatch(/[\u2013\u2014]/);
+  });
 });
