@@ -32,11 +32,13 @@ contract.
 
 Four more skills can make a drawing, where the ones above check one. They
 are third-party and never required. Use one only when the session already
-lists a skill of that name (under any plugin prefix): never install one,
-and never run an install command for one. What each installs, runs and
-sends, and the version that was read:
-`${CLAUDE_PLUGIN_ROOT}/docs/research/drawing-skills.md`. Read its entry
-before using a skill, and keep inside its conditions.
+lists a skill of that name (under any plugin prefix) and its installed
+version matches the version read in
+`${CLAUDE_PLUGIN_ROOT}/docs/research/drawing-skills.md`, or the owner
+accepts the difference; otherwise treat it as absent and draw (or polish)
+by hand. A name alone is not a match. Never install one, and never run an
+install command for one. Read its entry there before using it (what it
+installs, runs and sends), and keep inside its conditions.
 
 | Step | Skill, by name and upstream repository | When |
 | --- | --- | --- |
@@ -57,9 +59,10 @@ before using a skill, and keep inside its conditions.
    find here is filed as its own issue now (`gh issue create`), and the spec
    links it; never fix it inside the design.
 3. **Research.** Before drawing, collect named reference patterns into the
-   spec's table of adopted and rejected, each source marked read in full or
-   second-hand. When the reference hosts are blocked, ask for them to be
-   allowed, or write that the research was not live. With
+   spec's table of adopted and rejected, each source marked read in full,
+   read in part, second-hand or not read. When the reference hosts are
+   blocked, ask for them to be allowed, or write that the research was not
+   live. With
    `mattpocock-skills:research`, the findings go to one file and the table
    cites it.
 4. **Brief once.** If agents draw, give each one brief carrying every

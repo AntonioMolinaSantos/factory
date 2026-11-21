@@ -163,7 +163,9 @@ people's work, all are optional, and the grill never installs any: it uses
 one only when the session already has it. Each was vetted on 21 November
 2026, and the record says what each installs, runs and sends, at which
 version: [`../research/drawing-skills.md`](../research/drawing-skills.md).
-A newer version than the one read there is not vetted.
+A newer version than the one read there is not vetted: a skill whose
+installed version differs is treated as absent, unless the owner accepts
+the difference.
 
 - **Drawing, the default: `frontend-design`**, Anthropic's own plugin
   (`anthropics/claude-plugins-official`, `plugins/frontend-design`). Text
@@ -175,7 +177,9 @@ A newer version than the one read there is not vetted.
 - **A style direction, only when the owner asks for one, and one at a
   time.** `design-taste-frontend` (`Leonxlnx/taste-skill`), for a public
   marketing or landing screen only: it runs Node scripts and headless
-  Chrome, copies a kit into the project and adds a Stop hook once invoked.
+  Chrome, copies a kit into the project and registers a Stop hook once
+  invoked, so it is never invoked in the repo: it runs in a scratch copy
+  outside the repo, or its direction is taken from its rules read as text.
   Or `ui-ux-pro-max` (`nextlevelbuilder/ui-ux-pro-max-skill`), as a lookup of
   styles and guidelines: it runs Python scripts, and its plugin installs six
   more skills that the grill does not use. Either gives a direction on a
@@ -197,11 +201,14 @@ says which skill did what, and at which version.
 ## Sources
 
 The rules were first written from general knowledge. On 21 November 2026
-each was checked against the primary texts: WCAG 2.2 and Apple's Human
-Interface Guidelines were read; Nielsen Norman Group's heuristics and
-Material Design 3 could not be reached and are marked as such. The findings,
-rule by rule, with the quoted criteria, their levels and the candidates for
-missing rules: [`../research/ux-rules-sources.md`](../research/ux-rules-sources.md).
+each was checked against the primary texts. WCAG 2.2 and Apple's Human
+Interface Guidelines were read in part: WCAG from the editors' source on
+GitHub rather than the published Recommendation, the criteria named there,
+with their numbers to be confirmed against the published page; Apple's
+pages named there. Nielsen Norman Group's heuristics and Material Design 3
+could not be reached and are marked as such. The findings, rule by rule,
+with the quoted criteria, their levels and the candidates for missing
+rules: [`../research/ux-rules-sources.md`](../research/ux-rules-sources.md).
 
 Three rules changed wording because a text required it. R2: the level AA
 floor for reflow is 320 px, not 375 px, and 44 by 44 px is the AAA target
@@ -231,9 +238,10 @@ What the first grill taught, each item a correction that cost a rework.
    not-found page is not a before). Then a written list of what is weak, in
    the spec; the design must answer every item of it.
 2. **Research before drawing.** Named reference patterns, in a table of
-   adopted and rejected with the reason, each source labelled read in full or
-   second-hand. Allow the reference hosts in the environment's network first,
-   or say in the spec that the research was not live.
+   adopted and rejected with the reason, each source labelled read in full,
+   read in part, second-hand or not read. Allow the reference hosts in the
+   environment's network first, or say in the spec that the research was
+   not live.
 3. **The design skills from the start.** Design critique and accessibility
    review, plus UX copy where copy changes, shape the design and are run
    again on the result. The spec says what each one changed. Which skill
