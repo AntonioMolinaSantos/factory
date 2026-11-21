@@ -4,7 +4,8 @@
 // root holds the ceiling for the always-read set. CI runs npm test on every pull
 // request, so growth past the ceiling stops a merge until someone raises it on purpose.
 import { execFileSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { describe, expect, test } from "vitest";
@@ -27,10 +28,10 @@ describe("token budget", () => {
 
   test("it measures the always-read set, each on-demand file and the factory script, all present", () => {
     const m = measure();
-    expect(m.alwaysRead.files.map((f) => f.path)).toEqual([
-      "plugin/skills/ux-grill/SKILL.md",
-      "plugin/docs/conventions/ux-design.md",
-    ]);
+    // budget.json is the one place the always-read list is written and reviewed.
+    expect(Array.isArray(budget.alwaysRead.files) && budget.alwaysRead.files.length > 0).toBe(true);
+    expect(m.alwaysRead.files.map((f) => f.path)).toEqual(budget.alwaysRead.files);
+    expect(m.onDemand.files.map((f) => f.path).filter((p) => budget.alwaysRead.files.includes(p))).toEqual([]);
     expect(m.onDemand.files.map((f) => f.path)).toEqual([
       "plugin/docs/conventions/ux-checklists.md",
       "plugin/docs/research/ux-rules-sources.md",
@@ -44,6 +45,21 @@ describe("token budget", () => {
         expect(f.tokens, f.path).toBe(estimate(read(f.path)));
       }
       expect(group.total).toBe(group.files.reduce((s, f) => s + f.tokens, 0));
+    }
+  });
+
+  test("the script takes the always-read list from budget.json, not from its own code", () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "budget-"));
+    try {
+      mkdirSync(path.join(dir, "docs"));
+      writeFileSync(path.join(dir, "docs", "one.md"), "abcdefgh");
+      writeFileSync(path.join(dir, "budget.json"), JSON.stringify({ alwaysRead: { files: ["docs/one.md"], measured: 2, ceiling: 250 } }));
+      const m = measure(dir);
+      expect(m.alwaysRead.files.map((f) => f.path)).toEqual(["docs/one.md"]);
+      expect(m.alwaysRead.total).toBe(2);
+      expect(m.budget).toEqual({ ceiling: 250, within: true });
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
     }
   });
 

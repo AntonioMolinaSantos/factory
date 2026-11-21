@@ -2,9 +2,8 @@
 
 Moved here from the convention ([`ux-design.md`](ux-design.md)) in 0.6.2, so
 that a grill loads it only when it needs it. Read it only for a rule whose
-skill is not installed, or not at the vetted version, and for the three
-checks no skill makes: R1's states against the data model, R4's decoration
-over text, R6's focus under sticky parts.
+skill is not installed, or not at the vetted version. The three checks no
+skill makes are steps of the grill skill, which every grill reads.
 
 The rules are the contract: the record has one line per rule and nothing
 else is parsed. Skills that already exist are how a rule gets checked, not a
@@ -87,4 +86,5 @@ repeats the accessibility review without figures. The document mode of
 `design:design-system` writes component documentation, which is the build's
 work, not the design's. The tone alternatives of `design:ux-copy` are
 choices for the owner, not checks. No skill checks R1's list of states
-against the data model or R4's decoration over text: those two stay by hand.
+against the data model, R4's decoration over text or R6's focus under
+sticky parts: those three stay by hand, in the grill skill's steps 5 and 6.

@@ -214,18 +214,41 @@ describe("the UI/UX convention in this repo", () => {
     expect(skill).toContain("${CLAUDE_PLUGIN_ROOT}/docs/conventions/ux-checklists.md");
     expect(doc).toContain("(ux-checklists.md)");
     // Read on demand: only for a rule whose skill is absent or not at the vetted
-    // version, and for the three checks no skill makes.
+    // version (the test below holds that nothing else sends the grill there).
     for (const [name, text] of [["convention", doc], ["skill", skill]]) {
       const flat = text.replace(/\s+/g, " ");
       expect(flat, name).toMatch(/only for a rule whose skill is not installed, or not at the vetted version/);
-      expect(flat, name).toMatch(/R1's states against the data model, R4's decoration over text, R6's focus under sticky parts/);
     }
-    expect(checklists.replace(/\s+/g, " ")).toMatch(/No skill checks R1's list of states against the data model or R4's decoration over text/);
+    expect(checklists.replace(/\s+/g, " ")).toMatch(/No skill checks R1's list of states against the data model, R4's decoration over text or R6's focus under sticky parts: those three stay by hand/);
     expect(checklists.replace(/\s+/g, " ")).toMatch(/the sticky check stays by hand/);
     // Each checklist lives once: neither the convention nor the skill restates one.
     expect(skill).not.toMatch(/By hand:/);
     expect(doc).not.toMatch(/By hand:/);
     expect(doc + skill + checklists).not.toMatch(/[\u2013\u2014]/);
+  });
+
+  // The checklists are read on demand, and the budget counts them so: the three checks
+  // no skill makes (R1's states against the data model, R4's decoration over text, R6's
+  // focus under sticky parts) live in the skill, which every grill reads, so nothing
+  // sends the grill to the checklists except a rule whose skill is missing or unvetted.
+  test("the checklists are read only for a missing or unvetted skill, and the skill carries the three checks by hand", () => {
+    const files = [
+      ["skill", read("plugin", "skills", "ux-grill", "SKILL.md")],
+      ["convention", read("plugin", "docs", "conventions", "ux-design.md")],
+      ["checklists", read("plugin", "docs", "conventions", "ux-checklists.md")],
+    ];
+    for (const [name, text] of files) {
+      const flat = text.replace(/\s+/g, " ");
+      const sentences = flat.split(/(?<=\.) /).filter((s) => /\bRead (that file|it) only\b/.test(s));
+      expect(sentences.length, name).toBe(1);
+      expect(sentences[0], name).toMatch(/only for a rule whose skill is not installed, or not at the vetted version\.$/);
+      expect(flat, name).not.toMatch(/and for the (three )?checks? no skill makes/);
+    }
+    const skill = read("plugin", "skills", "ux-grill", "SKILL.md").replace(/\s+/g, " ");
+    const step = (n) => skill.split(/ (?=\d+\. \*\*)/).find((s) => s.startsWith(`${n}. **`)) ?? "";
+    expect(step(5)).toMatch(/every state of rule R1 the data model supports \(read the schema/);
+    expect(step(6)).toMatch(/no decoration crosses a line of text/);
+    expect(step(6)).toMatch(/sticky[^.]*keyboard focus[^.]*both widths|keyboard focus[^.]*sticky[^.]*both widths/);
   });
 
   // The guidance on the skills that draw and polish lives once, in the skill, which is

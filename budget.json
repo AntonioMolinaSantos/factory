@@ -4,10 +4,10 @@
       "plugin/skills/ux-grill/SKILL.md",
       "plugin/docs/conventions/ux-design.md"
     ],
-    "measured": 5266,
+    "measured": 5262,
     "ceiling": 5500,
     "measuredOn": "21 November 2026, factory 0.6.2"
   },
   "estimate": "characters divided by 4, rounded up per file (scripts/token-budget.mjs)",
-  "note": "Raise the ceiling in the same pull request as a deliberate growth, and say why."
+  "note": "alwaysRead.files is the one list of what every grill reads: scripts/token-budget.mjs and its test read it here. Raise the ceiling in the same pull request as a deliberate growth, and say why."
 }

@@ -18,9 +18,8 @@ look in the session's list of skills: if it is installed, load it and run it
 for that step; otherwise do the step with the checklist by hand in
 `${CLAUDE_PLUGIN_ROOT}/docs/conventions/ux-checklists.md`, which needs no
 other plugin. Read that file only for a rule whose skill is not installed,
-or not at the vetted version, and for the three checks no skill makes: R1's
-states against the data model, R4's decoration over text, R6's focus under
-sticky parts. Say in the spec which way each step was done. A skill's
+or not at the vetted version. The three checks no skill makes are steps 5
+and 6 below. Say in the spec which way each step was done. A skill's
 finding is evidence for a rule's line of the record, never the line itself:
 the nine rules stay the contract.
 
@@ -62,7 +61,8 @@ one, and never run an install command for one. Read its entry there first
   without hooks.
 
 Whatever drew or polished a screen still goes through the nine rules and the
-grill. The spec says which skill did what, and at which version.
+grill, and its lines of the record come from there. The spec says which
+skill did what, and at which version.
 
 ## Steps
 
@@ -108,6 +108,8 @@ grill. The spec says which skill did what, and at which version.
    folder outside git and compare the two captures; a layout that moves
    between them is a flaw to fix. Check by geometry that no decoration
    crosses a line of text: the text boxes against the decoration's edges.
+   No focus hides under a sticky part: scroll with keyboard focus at both
+   widths (R6).
    Show the owner the before and the after side by side, plus a stacked first
    screen legible on a phone, never only the HTML. Open every image yourself
    before sending it, and say so when variants barely differ.
