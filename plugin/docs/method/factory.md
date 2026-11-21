@@ -6,9 +6,11 @@ first calibration runs (section 10); revised 24 October 2026 for 0.5.0:
 risk tiers (section 13), past decisions in every review (section 4), shorter
 confirmation rounds, Codex collected beside the panel, bundled tickets, and
 the measurement that proves whether any of it helped (section 14); revised
-21 November 2026 for 0.6.0: the UI/UX verdict (section 15). One GitHub issue in, one reviewed pull request out. The
-factory chains what a careful team does by hand (spec, test-first build,
-review panel, the review loop, the merge rule) into one saved workflow,
+21 November 2026 for 0.6.0: the UI/UX verdict (section 15), and for 0.6.1:
+the accessibility review's target sizes graded by rule R2. One GitHub
+issue in, one reviewed pull request out. The factory chains what a careful
+team does by hand (spec, test-first build, review panel, the review loop,
+the merge rule) into one saved workflow,
 `/factory:factory`, so it runs the same way in every repo and every night.
 
 ## 1. What it is, and what it is not
@@ -535,5 +537,9 @@ survived their first use, per `plugin/docs/conventions/ux-design.md`.
   the built screens: design critique and accessibility review, plus UX copy
   when the change alters copy. Their findings are graded by the rule above,
   never by the skill's own severity: a skill adds no reason to stop a merge.
+  `design:accessibility-review` audits WCAG 2.1 and lists 44 px targets as
+  AA, so the reviewer grades a target size with the figures of rule R2 (24
+  by 24 px is the AA floor, 44 by 44 px is AAA and a choice of the rule), as
+  the convention's "How each rule is checked" says.
 - **The report** carries `ux` (the verdict after the raise) and `uxMissing`
   (each missing piece when the issue was handed back, empty otherwise).
