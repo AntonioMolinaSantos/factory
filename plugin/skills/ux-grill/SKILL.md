@@ -15,11 +15,14 @@ Read it first and follow it; this file only orders the work.
 
 Some steps are a job an existing skill already does. For each one below,
 look in the session's list of skills: if it is installed, load it and run it
-for that step; otherwise do the step with the convention's checklist by hand
-(its section "How each rule is checked"), which needs no other plugin. Say in
-the spec which way each step was done. A skill's finding is evidence for a
-rule's line of the record, never the line itself: the nine rules stay the
-contract.
+for that step; otherwise do the step with the checklist by hand in
+`${CLAUDE_PLUGIN_ROOT}/docs/conventions/ux-checklists.md`, which needs no
+other plugin. Read that file only for a rule whose skill is not installed,
+or not at the vetted version, and for the three checks no skill makes: R1's
+states against the data model, R4's decoration over text, R6's focus under
+sticky parts. Say in the spec which way each step was done. A skill's
+finding is evidence for a rule's line of the record, never the line itself:
+the nine rules stay the contract.
 
 | Step | Skill, by plugin and name | What it does here |
 | --- | --- | --- |
@@ -30,21 +33,36 @@ contract.
 | 5, states and messages | `design:ux-copy` | Empty and error states, confirmations, result messages, what grows in translation |
 | 8, the grill | `mattpocock-skills:grilling` | The form of a round and the free round |
 
-Four more skills can make a drawing, where the ones above check one. They
-are third-party and never required. Use one only when the session already
-lists a skill of that name (under any plugin prefix) and its installed
-version matches the version read in
-`${CLAUDE_PLUGIN_ROOT}/docs/research/drawing-skills.md`, or the owner
-accepts the difference; otherwise treat it as absent and draw (or polish)
-by hand. A name alone is not a match. Never install one, and never run an
-install command for one. Read its entry there before using it (what it
-installs, runs and sends), and keep inside its conditions.
+Four more skills can make a drawing. They are third-party and optional,
+vetted at the version read in
+`${CLAUDE_PLUGIN_ROOT}/docs/research/drawing-skills.md`. Use one only when
+the session lists a skill of that name (under any plugin prefix) at that
+version, or the owner accepts the difference; a name alone is not a match.
+Otherwise treat it as absent and draw (or polish) by hand. Never install
+one, and never run an install command for one. Read its entry there first
+(what it installs, runs and sends) and keep inside its conditions.
 
-| Step | Skill, by name and upstream repository | When |
-| --- | --- | --- |
-| 5, drawing | `frontend-design` (`anthropics/claude-plugins-official`) | The default when installed |
-| 5, a direction | `design-taste-frontend` (`Leonxlnx/taste-skill`), or `ui-ux-pro-max` (`nextlevelbuilder/ui-ux-pro-max-skill`) | Only when the owner asks for a style direction; one of the two, never both |
-| 7, polish and motion | `impeccable` (`pbakaus/impeccable`), its `polish` and `animate` commands | After the owner approved the layout |
+- **Step 5, drawing, the default:** `frontend-design`
+  (`anthropics/claude-plugins-official`). Text only: no script, no hook, no
+  network.
+- **Step 5, a style direction, only when the owner asks for one; one of the
+  two, never both.** `design-taste-frontend` (`Leonxlnx/taste-skill`), for a
+  public marketing or landing screen only. It runs Node and headless
+  Chrome, copies a kit and registers a Stop hook once invoked, so it is
+  never invoked in the repo: run it in a scratch copy outside the repo, or
+  read its rules as text. Or `ui-ux-pro-max`
+  (`nextlevelbuilder/ui-ux-pro-max-skill`), as a lookup of styles: it runs
+  Python, and its plugin installs six more skills the grill does not use.
+  Their palettes, fonts and kits never enter the mockup.
+- **Step 7, polish and motion, after the owner approved the layout:**
+  `impeccable` (`pbakaus/impeccable`), `polish` then `animate`. As a plugin
+  its hooks run a downloaded binary on every edit and it records anonymous
+  usage unless told not to, so the owner installs it knowingly and turns
+  that record off; the two commands also work from a copy of the skill
+  without hooks.
+
+Whatever drew or polished a screen still goes through the nine rules and the
+grill. The spec says which skill did what, and at which version.
 
 ## Steps
 
@@ -77,19 +95,15 @@ installs, runs and sends), and keep inside its conditions.
    of rule R1 the data model supports (read the schema before adding or
    dropping a state). Look up existing components before drawing a new one
    (rule R7), and draw a new one's interaction states on a sheet. With
-   `frontend-design` installed, draw with it, on a brief that pins the
-   repo's tokens as the whole palette, the real copy and both widths: its
-   freedom is layout, hierarchy and one bold element, never a colour or a
-   typeface of its own. Without it, draw by hand as the convention says.
-   When the owner asks for a style direction, and only then, take one of the
-   two style options inside its conditions, show what it proposes as a
-   labelled sheet, and draw the chosen direction on the repo's tokens: its
-   palette, fonts and kit stay out of the mockup, and it writes nothing into
-   the repo unless the owner says so. Run design critique and accessibility review, and UX copy when
-   copy changes, while drawing and again on the result (the borrowed skills
-   above, or the checklist by hand); write what each one changed into the
-   spec. Grade an accessibility finding with the convention's figures, not
-   the skill's.
+   `frontend-design`, the brief pins the repo's tokens as the whole palette,
+   the real copy and both widths: its freedom is layout, hierarchy and one
+   bold element, never a colour or a typeface of its own. A style direction
+   is shown as a labelled sheet, then drawn on the repo's tokens, and writes
+   nothing into the repo unless the owner says so. Run design critique and
+   accessibility review, and UX copy when copy changes, while drawing and
+   again on the result (the borrowed skills above, or the checklist by
+   hand); write what each one changed into the spec. Grade an accessibility
+   finding with the convention's figures, not the skill's.
 6. **Evidence.** Capture every screen twice at 375 px and 1280 px into a
    folder outside git and compare the two captures; a layout that moves
    between them is a flaw to fix. Check by geometry that no decoration
@@ -102,10 +116,11 @@ installs, runs and sends), and keep inside its conditions.
    labelled sheet of the same screens. Record their choice in the spec; the
    grill covers the chosen one. Then, with `impeccable` installed, run its
    `polish` command on the mockup, and its `animate` command only where
-   motion explains a state or a relationship. Polish refines the approved
-   layout and never redraws it. Motion stays under rule R6: every animation
-   has its reduced-motion path. Without the skill, polish by hand against
-   the convention's checklists and add no motion the spec does not ask for.
+   motion explains a state or a relationship, never only to be seen. Polish
+   refines the approved layout and never redraws it. Motion stays under rule
+   R6: every animation has its reduced-motion path. Without the skill,
+   polish by hand against the checklists and add no motion the spec does
+   not ask for.
    Capture again whatever changed (step 6), and write into the spec which
    skill drew or polished what, and at which version.
 8. **Grill.** One round per screen. In each round, put the nine rules in

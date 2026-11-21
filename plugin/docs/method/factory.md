@@ -540,6 +540,7 @@ survived their first use, per `plugin/docs/conventions/ux-design.md`.
   `design:accessibility-review` audits WCAG 2.1 and lists 44 px targets as
   AA, so the reviewer grades a target size with the figures of rule R2 (24
   by 24 px is the AA floor, 44 by 44 px is AAA and a choice of the rule), as
-  the convention's "How each rule is checked" says.
+  the convention's checklist for R2 says
+  (`plugin/docs/conventions/ux-checklists.md`).
 - **The report** carries `ux` (the verdict after the raise) and `uxMissing`
   (each missing piece when the issue was handed back, empty otherwise).
