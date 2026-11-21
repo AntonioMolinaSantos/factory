@@ -156,14 +156,59 @@ work, not the design's. The tone alternatives of `design:ux-copy` are
 choices for the owner, not checks. No skill checks R1's list of states
 against the data model or R4's decoration over text: those two stay by hand.
 
+## Skills that draw and polish
+
+The skills above check a drawing. Four more can make one. All are other
+people's work, all are optional, and the grill never installs any: it uses
+one only when the session already has it. Each was vetted on 21 November
+2026, and the record says what each installs, runs and sends, at which
+version: [`../research/drawing-skills.md`](../research/drawing-skills.md).
+A newer version than the one read there is not vetted: a skill whose
+installed version differs is treated as absent, unless the owner accepts
+the difference.
+
+- **Drawing, the default: `frontend-design`**, Anthropic's own plugin
+  (`anthropics/claude-plugins-official`, `plugins/frontend-design`). Text
+  only: no script, no hook, no network. Left free it chooses its own palette
+  and typefaces, so the brief pins the repo's tokens, the real copy and the
+  two widths, and the skill's freedom is layout, hierarchy and the one bold
+  element. Not installed: the mockup is drawn by hand, as this convention
+  says.
+- **A style direction, only when the owner asks for one, and one at a
+  time.** `design-taste-frontend` (`Leonxlnx/taste-skill`), for a public
+  marketing or landing screen only: it runs Node scripts and headless
+  Chrome, copies a kit into the project and registers a Stop hook once
+  invoked, so it is never invoked in the repo: it runs in a scratch copy
+  outside the repo, or its direction is taken from its rules read as text.
+  Or `ui-ux-pro-max` (`nextlevelbuilder/ui-ux-pro-max-skill`), as a lookup of
+  styles and guidelines: it runs Python scripts, and its plugin installs six
+  more skills that the grill does not use. Either gives a direction on a
+  sheet; the mockup is then drawn on the repo's tokens. Their palettes, fonts
+  and kits never enter it.
+- **Polish and motion, after the layout is approved: `impeccable`**
+  (`pbakaus/impeccable`), its `polish` then its `animate` command. Installed
+  as a plugin it adds hooks that run a downloaded binary on every edit and
+  records anonymous usage unless told not to, so the owner installs it
+  knowingly and turns that record off; the two commands also work from a
+  copy of the skill without hooks. Polish refines and never redesigns.
+  Motion stays under R6: every animation has its reduced-motion path, and
+  none is added only to be seen.
+
+Whatever drew or polished a screen, the screen still goes through the nine
+rules and the grill, and its lines of the record come from there. The spec
+says which skill did what, and at which version.
+
 ## Sources
 
 The rules were first written from general knowledge. On 21 November 2026
-each was checked against the primary texts: WCAG 2.2 and Apple's Human
-Interface Guidelines were read; Nielsen Norman Group's heuristics and
-Material Design 3 could not be reached and are marked as such. The findings,
-rule by rule, with the quoted criteria, their levels and the candidates for
-missing rules: [`../research/ux-rules-sources.md`](../research/ux-rules-sources.md).
+each was checked against the primary texts. WCAG 2.2 and Apple's Human
+Interface Guidelines were read in part: WCAG from the editors' source on
+GitHub rather than the published Recommendation, the criteria named there,
+with their numbers to be confirmed against the published page; Apple's
+pages named there. Nielsen Norman Group's heuristics and Material Design 3
+could not be reached and are marked as such. The findings, rule by rule,
+with the quoted criteria, their levels and the candidates for missing
+rules: [`../research/ux-rules-sources.md`](../research/ux-rules-sources.md).
 
 Three rules changed wording because a text required it. R2: the level AA
 floor for reflow is 320 px, not 375 px, and 44 by 44 px is the AAA target
@@ -193,9 +238,10 @@ What the first grill taught, each item a correction that cost a rework.
    not-found page is not a before). Then a written list of what is weak, in
    the spec; the design must answer every item of it.
 2. **Research before drawing.** Named reference patterns, in a table of
-   adopted and rejected with the reason, each source labelled read in full or
-   second-hand. Allow the reference hosts in the environment's network first,
-   or say in the spec that the research was not live.
+   adopted and rejected with the reason, each source labelled read in full,
+   read in part, second-hand or not read. Allow the reference hosts in the
+   environment's network first, or say in the spec that the research was
+   not live.
 3. **The design skills from the start.** Design critique and accessibility
    review, plus UX copy where copy changes, shape the design and are run
    again on the result. The spec says what each one changed. Which skill
@@ -203,7 +249,8 @@ What the first grill taught, each item a correction that cost a rework.
    installed: "How each rule is checked" above.
 4. **Layout first, then atmosphere.** Backgrounds and decorative variants
    are a separate step after the layout is approved, shown as a labelled
-   sheet of variants; the spec records the choice.
+   sheet of variants; the spec records the choice. Polish and motion belong
+   to this step too, never before it ("Skills that draw and polish" above).
 5. **A live defect is its own issue.** A bug or wrong copy found while
    drawing the before is filed as an issue of its own, never fixed silently
    inside the design. The spec may propose the fix; it does not carry it.

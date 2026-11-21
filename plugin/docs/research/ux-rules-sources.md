@@ -219,6 +219,8 @@ unchanged.
 | `design:design-critique` skill | second-hand, read in full | 21 November 2026 |
 | `design:ux-copy` skill | second-hand, read in full | 21 November 2026 |
 | `design:design-system` skill | second-hand, read in full | 21 November 2026 |
+| `mattpocock-skills:research` skill | second-hand, read in full | 21 November 2026 |
+| `mattpocock-skills:grilling` skill | second-hand, read in full | 21 November 2026 |
 
 To finish the reading: allow `www.w3.org`, `www.nngroup.com` and
 `m3.material.io` in the network of the session, confirm the criterion

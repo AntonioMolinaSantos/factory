@@ -1442,12 +1442,12 @@ describe("factory workflow: 0.5 measurement", () => {
   test("the report carries the version, the tier and every agent the run spent, by model", async () => {
     const { result, calls } = await run({ issue: 5, merge: true });
     expect(result.version).toBe(PLUGIN.version);
-    expect(result.version).toBe("0.6.0");
+    expect(result.version).toBe("0.6.1");
     expect(result.agents.total).toBe(calls.length);
     const byModel = {};
     for (const c of calls) byModel[c.opts.model || "session"] = (byModel[c.opts.model || "session"] || 0) + 1;
     expect(result.agents.byModel).toEqual(byModel);
-    expect(calls.find((c) => c.label === "report").prompt).toContain('"version": "0.6.0"');
+    expect(calls.find((c) => c.label === "report").prompt).toContain('"version": "0.6.1"');
   });
 
   test("output tokens are what the run spent from the runtime's budget, or null when it gives none", async () => {
@@ -1466,7 +1466,7 @@ describe("factory workflow: 0.5 measurement", () => {
 
   test("a refusal at intake still says which version refused", async () => {
     const { result } = await run({ issue: 5 }, { intake: { repo: "o/r", issues: [issue(5, { closedByOpenPr: true })] } });
-    expect(result.version).toBe("0.6.0");
+    expect(result.version).toBe("0.6.1");
   });
 });
 
@@ -1799,6 +1799,9 @@ describe("factory workflow: 0.6.0 the UI/UX verdict", () => {
     expect(p).toMatch(/design-critique/);
     expect(p).toMatch(/accessibility-review/);
     expect(p).toMatch(/ux-copy/);
+    // The skill audits WCAG 2.1 and lists 44 px as AA: target sizes are graded by R2's figures.
+    expect(p).toMatch(/accessibility-review audits WCAG 2\.1[^.]*44 px[^.]*rule R2 \(24 by 24 px is the AA floor/);
+    expect(METHOD).toMatch(/audits WCAG 2\.1 and lists 44 px targets as\s+AA[^.]*rule R2/);
     expect(calls.find((c) => c.label === "report").prompt).toContain('"ux": "needed"');
   });
 
@@ -1811,6 +1814,7 @@ describe("factory workflow: 0.6.0 the UI/UX verdict", () => {
     expect(p).toMatch(/design-critique/);
     expect(p).toMatch(/accessibility-review/);
     expect(p).toMatch(/P2, never P1/);
+    expect(p).toMatch(/accessibility-review audits WCAG 2\.1[^.]*44 px[^.]*rule R2/);
     expect(p).not.toContain("docs/design/");
   });
 
@@ -1973,10 +1977,10 @@ describe("factory workflow: 0.6.0 the UI/UX verdict", () => {
     expect(METHOD).toMatch(/In\s+the\s+script\s+from\s+0\.6\.0/);
   });
 
-  test("VERSION is 0.6.0, equal to plugin.json", () => {
+  test("VERSION is 0.6.1, equal to plugin.json", () => {
     const plugin = JSON.parse(readFileSync(path.join(root, "plugin", ".claude-plugin", "plugin.json"), "utf8"));
     const version = SCRIPT.match(/const VERSION = '([^']+)'/)[1];
-    expect(version).toBe("0.6.0");
+    expect(version).toBe("0.6.1");
     expect(plugin.version).toBe(version);
   });
 });
