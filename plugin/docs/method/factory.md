@@ -59,6 +59,18 @@ plain-code checks run before any agent reads the body:
 2. The factory never applies `ready-for-agent` itself, except to the issues
    it files from a plan a writer merged (section 12).
 
+**Who counts as a writer.** One function in the script decides it for every
+check: the label applier, the merger of a spec, a plan or a design and its
+mockup (12.1, 15), and the author of a guardrail stop (section 6). A writer
+is a login whose collaborator permission was read as write, maintain or
+admin, or, from 0.6.3, the owner of a repository a user account owns: in a
+cloud session the GitHub proxy answers 403 on the collaborators call, and
+such an owner is always the repository's admin. The owner comes from
+`gh api repos/{owner}/{repo} --jq '.owner.type, .owner.login'`, the call the
+proxy answers; it must be `User`, its login must be the owner named in the
+repo, and logins compare ignoring case. An organisation repository, or any
+other login, still needs the permission read, and fails closed without it.
+
 **Decisions come from the work's own record.** The spec, the plan writer and
 the approver are told that decisions come only from the issue's body and
 comments and the merged spec and plan (in spec mode, the merged spec and its
@@ -227,7 +239,7 @@ saying why and linking whatever it built:
 | --- | --- |
 | Underspecified: no testable acceptance criteria | `needs-info` |
 | The work would change a convention, a method, a data model, CI, a public URL, a price or anything promised to a customer, or the spec hits the denylist | `ready-for-human` |
-| The work trips the AI governance guardrail (`plugin/docs/conventions/ai-governance.md`, "The guardrail"): it could get around a platform's enforcement, break a law, act on a person without their consent, or touch a sensitive sector. The spec names each trigger it sees; the run stops before the build and the comment names each trigger with its reason and carries the line `factory-guardrail-stop`. The owner relabelling `ready-for-agent` after that comment is the go-ahead: an Opus read finds the last such comment from an account with write access and when `ready-for-agent` was last applied, and the run builds only when the label is the later of the two, reporting the cleared triggers (`guardrailCleared`). A read that fails stops again. Decided 8 November 2026, in the script from 0.5.1 | `ready-for-human` |
+| The work trips the AI governance guardrail (`plugin/docs/conventions/ai-governance.md`, "The guardrail"): it could get around a platform's enforcement, break a law, act on a person without their consent, or touch a sensitive sector. The spec names each trigger it sees; the run stops before the build and the comment names each trigger with its reason and carries the line `factory-guardrail-stop`. The owner relabelling `ready-for-agent` after that comment is the go-ahead: an Opus read returns every such comment with its author's permission, the script keeps the last one that blocks: a writer's (section 2), or one whose author's permission could not be read, since doubt stops; only a stop from an author read as below write is dropped. Only a writer's stop can be cleared: with no writer's stop among them, the run stops again and compares it with when `ready-for-agent` was last applied: the run builds only when the label is the later of the two, reporting the cleared triggers (`guardrailCleared`). A read that fails stops again. Decided 8 November 2026, in the script from 0.5.1 | `ready-for-human` |
 | A `needed` UI/UX verdict without an approved design: no design spec named, or one not merged by a writer, or without its `needed` verdict, its mockup folder holding HTML, or a complete grill record (section 15). The comment names each missing piece and `/factory:ux-grill` as the next step. From 0.6.0 | `ready-for-human` |
 | CI red or pending after a red local build or fix round, a build that did not push, a P1 left after the last round, a P1 the re-grade found outside the scope, a re-grade that returned nothing (its candidates are still filed), no Codex answer on the head, CI still pending at the ceiling, a failed gate | `needs-triage` |
 

@@ -1,5 +1,38 @@
 # Changelog
 
+## 0.6.3 (21 November 2026)
+
+- **The factory runs from a cloud Claude Code session.** There the GitHub
+  proxy answers 403 on `repos/{owner}/{repo}/collaborators/{login}/permission`
+  and GraphQL is unavailable, so every writer check failed closed ("the
+  permission of X ... could not be verified"). A second trust source: the
+  owner of a repository a user account owns is a writer without the
+  collaborators call. The owner comes from
+  `gh api repos/{owner}/{repo} --jq '.owner.type, .owner.login'`, which the
+  proxy answers (`users/{login}` is refused there). The type must be `User`,
+  the login must be the owner named in the repo, and logins compare ignoring
+  case.
+- **One function, `writer()`, decides every writer check**, so the rules
+  cannot drift: the label applier at intake, the merger of a spec or plan,
+  the mergers of a design spec and its mockup folder, and the author of a
+  guardrail stop. The guardrail read now returns every stop with its
+  author's permission and the script keeps the last one that counts; the
+  agent no longer filters them. `WRITERS` is read in that one place.
+- **A stop whose author's permission cannot be read counts as a stop.** Only
+  a stop from an author read as below write, and not the owner, is dropped.
+  Doubt stops: a write collaborator's stop in a cloud session, where the
+  permission call answers 403, still holds the run. An unread stop blocks
+  but never clears: a relabel clears only when at least one stop is a
+  verified writer's, so a stranger's comment cannot stand in for the
+  factory's own.
+- **Unchanged, fail closed:** an organisation repository, or any login other
+  than the user owner, still needs the permission read, and a failed read
+  refuses as before. A permission the intake did not report as read
+  (`permissionRead` missing) now counts as unread.
+- The intake, document, UI/UX and guardrail reads ask for `ownerType` and
+  `ownerLogin` (two empty strings when the call fails).
+- The method says who counts as a writer in section 2.
+
 ## 0.6.2 (21 November 2026)
 
 - **Every grill loads less, and no rule or check is lost.** What a grill
