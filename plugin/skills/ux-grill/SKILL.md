@@ -11,6 +11,25 @@ The contract, the line between needed and not needed, the nine rules, the
 record format and how the work runs: `${CLAUDE_PLUGIN_ROOT}/docs/conventions/ux-design.md`.
 Read it first and follow it; this file only orders the work.
 
+## Borrowed skills
+
+Some steps are a job an existing skill already does. For each one below,
+look in the session's list of skills: if it is installed, load it and run it
+for that step; otherwise do the step with the convention's checklist by hand
+(its section "How each rule is checked"), which needs no other plugin. Say in
+the spec which way each step was done. A skill's finding is evidence for a
+rule's line of the record, never the line itself: the nine rules stay the
+contract.
+
+| Step | Skill, by plugin and name | What it does here |
+| --- | --- | --- |
+| 3, research | `mattpocock-skills:research` | Primary sources into one file the spec cites |
+| 5, drawing | `design:design-system` | Audit mode for values typed by hand, extend mode before a new component |
+| 5 and 6, the drawn screens | `design:design-critique` | First impression, hierarchy, unnecessary steps |
+| 5 and 6, the drawn screens | `design:accessibility-review` | Ratios, target sizes, the keyboard pass |
+| 5, states and messages | `design:ux-copy` | Empty and error states, confirmations, result messages, what grows in translation |
+| 8, the grill | `mattpocock-skills:grilling` | The form of a round and the free round |
+
 ## Steps
 
 1. **Verdict.** Read the spec and the code it concerns. Apply item 2 of the
@@ -26,7 +45,9 @@ Read it first and follow it; this file only orders the work.
 3. **Research.** Before drawing, collect named reference patterns into the
    spec's table of adopted and rejected, each source marked read in full or
    second-hand. When the reference hosts are blocked, ask for them to be
-   allowed, or write that the research was not live.
+   allowed, or write that the research was not live. With
+   `mattpocock-skills:research`, the findings go to one file and the table
+   cites it.
 4. **Brief once.** If agents draw, give each one brief carrying every
    requirement (the weak list, the research, the nine rules, the repo's
    tokens, both widths, the design skills), run them on Fable, check the
@@ -39,8 +60,10 @@ Read it first and follow it; this file only orders the work.
    of rule R1 the data model supports (read the schema before adding or
    dropping a state). Look up existing components before drawing a new one
    (rule R7). Run design critique and accessibility review, and UX copy when
-   copy changes, while drawing and again on the result; write what each one
-   changed into the spec.
+   copy changes, while drawing and again on the result (the borrowed skills
+   above, or the checklist by hand); write what each one changed into the
+   spec. Grade an accessibility finding with the convention's figures, not
+   the skill's.
 6. **Evidence.** Capture every screen twice at 375 px and 1280 px into a
    folder outside git and compare the two captures; a layout that moves
    between them is a flaw to fix. Check by geometry that no decoration
@@ -58,7 +81,9 @@ Read it first and follow it; this file only orders the work.
    contrast ratio, the longest real string, the component that already
    exists); decisions are the owner's. After the last screen, one free round:
    what the rules did not ask, starting with the screen you would least like
-   to ship.
+   to ship. With `mattpocock-skills:grilling`, take its form for a round and
+   let its design tree drive the free round; the screens and the nine rules
+   still fix the rounds before it.
 9. **Change.** Apply each answer to the mockup and the spec as it lands, and
    capture again whatever changed. A rule the owner waives is recorded with
    their reason, in their words.
