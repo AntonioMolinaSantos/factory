@@ -160,4 +160,109 @@ describe("the UI/UX convention in this repo", () => {
     expect(skill).toContain("docs/conventions/ux-design.md");
     expect(skill).not.toMatch(/\| R1 \|/);
   });
+
+  // The rules were checked against primary texts (plugin/docs/research/ux-rules-sources.md).
+  // The convention points to the findings, and the findings judge every rule it names.
+  test("the convention cites its sources, and the findings carry a verdict for every rule", () => {
+    const doc = read("plugin", "docs", "conventions", "ux-design.md");
+    expect(doc).toMatch(/^## Sources$/m);
+    expect(doc).toContain("../research/ux-rules-sources.md");
+    const findings = read("plugin", "docs", "research", "ux-rules-sources.md");
+    for (const rule of RULES) {
+      const start = findings.search(new RegExp(`^### ${rule}: `, "m"));
+      expect(start, rule).toBeGreaterThan(-1);
+      const body = findings.slice(start + 1).split(/^### /m)[0];
+      expect(body, rule).toMatch(/^\| Verdict \| \*\*(supported|needs correction|unsupported)\*\*/m);
+    }
+    // Every source says how far it was read: nothing is passed off as read.
+    const sources = findings.split(/^## Sources$/m)[1] ?? "";
+    const rows = sources.split("\n").filter((l) => /^\| (?!Source|---)/.test(l));
+    expect(rows.length).toBeGreaterThan(0);
+    for (const row of rows) expect(row).toMatch(/read in full|read in part|second-hand|not read, from memory/);
+    expect(doc + findings).not.toMatch(/[\u2013\u2014]/);
+  });
+
+  // The grill borrows skills that already exist, each for one job, and works without
+  // them: the convention keeps a checklist by hand for every rule. The checklist is a
+  // list, never a second table: the factory reads the rule ids off table rows.
+  test("every rule has a checklist by hand, and the grill names each borrowed skill with its fallback", () => {
+    const doc = read("plugin", "docs", "conventions", "ux-design.md");
+    const start = doc.search(/^## How each rule is checked$/m);
+    expect(start).toBeGreaterThan(-1);
+    const part = doc.slice(start + 1).split(/^## /m)[0];
+    for (const rule of RULES) {
+      const line = part.split("\n\n").find((b) => b.startsWith(`- **${rule}.**`));
+      expect(line, rule).toBeTruthy();
+      expect(line, rule).toMatch(/By hand:/);
+    }
+    expect([...doc.matchAll(/^\| (R\d+) \|/gm)].map((m) => m[1])).toEqual(RULES);
+    const skill = read("plugin", "skills", "ux-grill", "SKILL.md");
+    const borrowed = ["mattpocock-skills:research", "mattpocock-skills:grilling", "design:design-critique", "design:accessibility-review", "design:ux-copy", "design:design-system"];
+    for (const name of borrowed) {
+      expect(skill, name).toContain(`\`${name}\``);
+      expect(doc, name).toContain(`\`${name}\``);
+    }
+    expect(skill).toMatch(/if it is installed/);
+    expect(skill).toMatch(/How each rule is checked/);
+    expect(skill).not.toMatch(/By hand:/);
+    expect(doc + skill).not.toMatch(/[\u2013\u2014]/);
+  });
+
+  // The owner adopted the candidates the research found (21 November 2026). Each is
+  // folded into the rule it belongs to: the row says it, the checklist by hand checks
+  // it, and the findings mark it adopted. The count stays nine.
+  test("the adopted candidates are folded into their rules, checked by hand, and marked adopted", () => {
+    const doc = read("plugin", "docs", "conventions", "ux-design.md");
+    const row = (rule) => doc.split("\n").find((l) => l.startsWith(`| ${rule} |`)) ?? "";
+    const checklist = doc.slice(doc.search(/^## How each rule is checked$/m) + 1).split(/^## /m)[0];
+    const item = (rule) => (checklist.split("\n\n").find((b) => b.startsWith(`- **${rule}.**`)) ?? "").replace(/\s+/g, " ");
+    const folds = [
+      ["R1", /an error state says what went wrong and how to fix it/, /what went wrong/],
+      ["R3", /a destructive action is never the primary one/, /destructive/],
+      ["R4", /colour is never the only signal/, /colour alone|only signal/],
+      ["R6", /never hidden by sticky parts/, /sticky/],
+      ["R6", /a placeholder is never the label/, /placeholder/],
+      ["R7", /a new component draws its interaction states \(hover, focus, active, disabled/, /hover, focus, active, disabled/],
+    ];
+    for (const [rule, inRow, inChecklist] of folds) {
+      expect(row(rule), `${rule} row`).toMatch(inRow);
+      expect(item(rule), `${rule} checklist`).toMatch(inChecklist);
+    }
+    const findings = read("plugin", "docs", "research", "ux-rules-sources.md");
+    const candidates = (findings.split(/^## Candidates for missing rules$/m)[1] ?? "").split(/^## /m)[0];
+    const adopted = candidates.split("\n").filter((l) => /\*\*Adopted, folded into R\d\b/.test(l));
+    expect(adopted.map((l) => l.match(/folded into (R\d)/)[1]).sort()).toEqual(folds.map((f) => f[0]).sort());
+    expect(candidates).not.toMatch(/Not applied/);
+  });
+
+  // The writing rule holds in the research records and the changelog too, not only
+  // in the convention and the skill.
+  test("no em or en dash in the research records or the changelog", () => {
+    const dir = path.join(root, "plugin", "docs", "research");
+    const files = readdirSync(dir).filter((f) => f.endsWith(".md")).map((f) => ["plugin", "docs", "research", f]);
+    expect(files.length).toBeGreaterThan(0);
+    for (const p of [...files, ["CHANGELOG.md"]]) expect(read(...p), p.join("/")).not.toMatch(/[\u2013\u2014]/);
+  });
+
+  // The third-party skills the grill may use (plugin/docs/research/drawing-skills.md):
+  // each one vetted carries its licence, the commit read and a verdict, and the record
+  // hands no one a command to install anything, since none was run.
+  test("every vetted drawing skill carries a licence, its commit and a verdict, and no install command", () => {
+    const text = read("plugin", "docs", "research", "drawing-skills.md");
+    const summary = (text.split(/^## Summary$/m)[1] ?? "").split(/^## /m)[0];
+    const rows = summary.split("\n").filter((l) => /^\| `/.test(l));
+    expect(rows.length).toBeGreaterThan(0);
+    const sections = text.split(/^## /m).slice(1);
+    for (const row of rows) {
+      const name = row.match(/^\| `([^`]+)`/)[1];
+      const commit = row.match(/commit `([0-9a-f]{7,40})`/)?.[1];
+      expect(commit, `${name} commit in the summary`).toBeTruthy();
+      const body = sections.find((s) => s.startsWith(name) && !/[\w-]/.test(s[name.length]));
+      expect(body, `${name} section`).toBeTruthy();
+      expect(body, `${name} licence`).toMatch(/^- \*\*Licence\.\*\* \S/m);
+      expect(body, `${name} commit`).toContain(`commit \`${commit}\``);
+      expect(body, `${name} verdict`).toMatch(/^- \*\*Verdict: (recommended|not vetted)\b/m);
+    }
+    expect(text).not.toMatch(/\bnpx\b|npm install|pip install|claude plugin install|\bcurl\b/i);
+  });
 });
