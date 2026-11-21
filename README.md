@@ -134,6 +134,8 @@ tests/                            the workflow's guards, the UI/UX rule, the lay
 package.json                      the test tooling (vitest), outside the plugin
 ```
 
+`npm run budget` estimates in tokens what the plugin loads; `budget.json` holds the ceiling for what every grill reads, and `npm test` enforces it.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Security reports: [SECURITY.md](SECURITY.md).
