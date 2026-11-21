@@ -40,6 +40,38 @@ all nine is not thereby WCAG conformant: criteria that no mockup can show
 (names and roles, focus order, text alternatives) are left to the
 accessibility review of the built screen.
 
+## In short
+
+The convention carried this summary until 0.6.2; it keeps one line pointing
+here now.
+
+The rules were first written from general knowledge. On 21 November 2026
+each was checked against the primary texts. WCAG 2.2 and Apple's Human
+Interface Guidelines were read in part: WCAG from the editors' source on
+GitHub rather than the published Recommendation, the criteria named in
+"Sources" below, with their numbers to be confirmed against the published
+page; Apple's pages named there. Nielsen Norman Group's heuristics and Material Design 3
+could not be reached and are marked as such. The findings, rule by rule,
+with the quoted criteria, their levels and the candidates for missing
+rules, follow.
+
+Three rules changed wording because a text required it. R2: the level AA
+floor for reflow is 320 px, not 375 px, and 44 by 44 px is the AAA target
+size and Apple's (the AA floor is 24 by 24 px), kept on purpose. R4: level AA
+also sets 3 to 1 for controls and their states. R9: both texts accept undo in
+place of a confirmation, and Apple advises against asking when the action
+can be undone. Where a rule goes beyond level AA (44 px targets, reduced
+motion, 4.5 to 1 for large text) it is a choice, and the findings say so.
+
+The same reading listed candidates for missing rules. The owner adopted the
+six that a mockup can show, each folded into an existing rule: colour is
+never the only signal (WCAG 1.4.1, level A) into R4; focus never hidden by
+sticky parts (2.4.11, level AA) and a placeholder never the label (a reading
+of 3.3.2, level A) into R6; a destructive action never the primary one (Apple,
+Buttons) into R3; what an error state says (3.3.1, level A, and 3.3.3, level
+AA) into R1; the interaction states of a new component into R7, on design
+practice only, with no primary text read behind it.
+
 ## The rules
 
 ### R1: Every state is drawn
@@ -193,6 +225,9 @@ should be graded with that in mind.
   plus `mattpocock-skills:research` and `mattpocock-skills:grilling` (both
   read in full, 21 November 2026), each mapped to the rule or step it
   serves, with a checklist by hand for a repo that has none of them.
+- From 0.6.2 the convention keeps one line for each: the summary of the
+  sources is "In short" above, and the checklists by hand are in
+  [`../conventions/ux-checklists.md`](../conventions/ux-checklists.md).
 
 Then, the candidates the owner adopted, each inside an existing rule:
 
