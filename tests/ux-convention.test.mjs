@@ -234,4 +234,35 @@ describe("the UI/UX convention in this repo", () => {
     expect(adopted.map((l) => l.match(/folded into (R\d)/)[1]).sort()).toEqual(folds.map((f) => f[0]).sort());
     expect(candidates).not.toMatch(/Not applied/);
   });
+
+  // The writing rule holds in the research records and the changelog too, not only
+  // in the convention and the skill.
+  test("no em or en dash in the research records or the changelog", () => {
+    const dir = path.join(root, "plugin", "docs", "research");
+    const files = readdirSync(dir).filter((f) => f.endsWith(".md")).map((f) => ["plugin", "docs", "research", f]);
+    expect(files.length).toBeGreaterThan(0);
+    for (const p of [...files, ["CHANGELOG.md"]]) expect(read(...p), p.join("/")).not.toMatch(/[\u2013\u2014]/);
+  });
+
+  // The third-party skills the grill may use (plugin/docs/research/drawing-skills.md):
+  // each one vetted carries its licence, the commit read and a verdict, and the record
+  // hands no one a command to install anything, since none was run.
+  test("every vetted drawing skill carries a licence, its commit and a verdict, and no install command", () => {
+    const text = read("plugin", "docs", "research", "drawing-skills.md");
+    const summary = (text.split(/^## Summary$/m)[1] ?? "").split(/^## /m)[0];
+    const rows = summary.split("\n").filter((l) => /^\| `/.test(l));
+    expect(rows.length).toBeGreaterThan(0);
+    const sections = text.split(/^## /m).slice(1);
+    for (const row of rows) {
+      const name = row.match(/^\| `([^`]+)`/)[1];
+      const commit = row.match(/commit `([0-9a-f]{7,40})`/)?.[1];
+      expect(commit, `${name} commit in the summary`).toBeTruthy();
+      const body = sections.find((s) => s.startsWith(name) && !/[\w-]/.test(s[name.length]));
+      expect(body, `${name} section`).toBeTruthy();
+      expect(body, `${name} licence`).toMatch(/^- \*\*Licence\.\*\* \S/m);
+      expect(body, `${name} commit`).toContain(`commit \`${commit}\``);
+      expect(body, `${name} verdict`).toMatch(/^- \*\*Verdict: (recommended|not vetted)\b/m);
+    }
+    expect(text).not.toMatch(/\bnpx\b|npm install|pip install|claude plugin install|\bcurl\b/i);
+  });
 });
