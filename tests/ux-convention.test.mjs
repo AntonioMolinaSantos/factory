@@ -207,4 +207,31 @@ describe("the UI/UX convention in this repo", () => {
     expect(skill).not.toMatch(/By hand:/);
     expect(doc + skill).not.toMatch(/[\u2013\u2014]/);
   });
+
+  // The owner adopted the candidates the research found (21 November 2026). Each is
+  // folded into the rule it belongs to: the row says it, the checklist by hand checks
+  // it, and the findings mark it adopted. The count stays nine.
+  test("the adopted candidates are folded into their rules, checked by hand, and marked adopted", () => {
+    const doc = read("plugin", "docs", "conventions", "ux-design.md");
+    const row = (rule) => doc.split("\n").find((l) => l.startsWith(`| ${rule} |`)) ?? "";
+    const checklist = doc.slice(doc.search(/^## How each rule is checked$/m) + 1).split(/^## /m)[0];
+    const item = (rule) => (checklist.split("\n\n").find((b) => b.startsWith(`- **${rule}.**`)) ?? "").replace(/\s+/g, " ");
+    const folds = [
+      ["R1", /an error state says what went wrong and how to fix it/, /what went wrong/],
+      ["R3", /a destructive action is never the primary one/, /destructive/],
+      ["R4", /colour is never the only signal/, /colour alone|only signal/],
+      ["R6", /never hidden by sticky parts/, /sticky/],
+      ["R6", /a placeholder is never the label/, /placeholder/],
+      ["R7", /a new component draws its interaction states \(hover, focus, active, disabled/, /hover, focus, active, disabled/],
+    ];
+    for (const [rule, inRow, inChecklist] of folds) {
+      expect(row(rule), `${rule} row`).toMatch(inRow);
+      expect(item(rule), `${rule} checklist`).toMatch(inChecklist);
+    }
+    const findings = read("plugin", "docs", "research", "ux-rules-sources.md");
+    const candidates = (findings.split(/^## Candidates for missing rules$/m)[1] ?? "").split(/^## /m)[0];
+    const adopted = candidates.split("\n").filter((l) => /\*\*Adopted, folded into R\d\b/.test(l));
+    expect(adopted.map((l) => l.match(/folded into (R\d)/)[1]).sort()).toEqual(folds.map((f) => f[0]).sort());
+    expect(candidates).not.toMatch(/Not applied/);
+  });
 });

@@ -108,7 +108,7 @@ accessibility review of the built screen.
 | WCAG 2.2, beyond the rule | Focus Appearance (2.4.13, Level AAA, new in 2.2) sets a size (a 2 CSS pixel perimeter) and a 3:1 change of contrast for the indicator. Focus Not Obscured (Minimum) (2.4.11, Level AA, new in 2.2): "When a user interface component receives keyboard focus, the component is not entirely hidden due to author-created content." |
 | Apple HIG | Accessibility: "Let people use the keyboard alone to navigate and interact with your app." And on motion: "People who are prone to these effects can turn on the Reduce Motion accessibility setting. When this setting is active, ensure your app or game responds by reducing automatic and repetitive animations, including zooming, scaling, and peripheral motion." Motion: "Make motion optional." The Accessibility page has no statement on the look of a focus indicator. |
 | Verdict | **supported**. Three of the four parts are Level A or AA. The fourth, reduced motion, is Level AAA in WCAG (2.3.3), so it is not an AA requirement; Apple asks for it without qualification, and the rule keeps it as a choice above AA. The contrast of the focus ring is now measured under R4. |
-| Correction | None. Two things the rule does not ask are listed as candidates: focus hidden by a sticky bar (2.4.11 AA), and a label that is only a placeholder. |
+| Correction | None. Two things the rule did not ask were listed as candidates and adopted: focus hidden by a sticky bar (2.4.11 AA), and a label that is only a placeholder. |
 
 ### R7: Reuse before invent
 
@@ -152,14 +152,20 @@ test for a rule is the convention's own: checkable on a mockup or a
 screenshot. None of these clearly requires a tenth rule; the count stays
 nine.
 
+**Decision, 21 November 2026.** The owner adopted the six candidates
+recommended for folding, into five rules (R1, R3, R4, R6 twice, R7). Each
+row below says where it went. The rest stay left out. The rule tables above
+keep the wording that was checked that day; the current wording is the
+convention's.
+
 | Candidate | Source | Recommendation |
 | --- | --- | --- |
-| Colour is never the only signal (an error is red and also says so) | WCAG 1.4.1 Use of Color, Level A: "Color is not used as the only visual means of conveying information, indicating an action, prompting a response, or distinguishing a visual element." Apple, Accessibility: "Convey information with more than color alone." | **Fold into R4**, the rule that already measures colour. Level A, visible on a mockup. Not applied here: it is an addition, not a correction, so it is the owner's call. The strongest candidate of the list. |
-| Focus is not hidden behind a sticky header, a cookie bar or a sheet | WCAG 2.4.11 Focus Not Obscured (Minimum), Level AA, new in 2.2 | **Fold into R6** when a screen has sticky or overlaid parts. Not applied, same reason. |
-| A destructive action is never the primary one | Apple, Buttons: "Don't assign the primary role to a button that performs a destructive action, even if that action is the most likely choice." | **Fold into R3.** Visible on a mockup. Not applied. |
-| An error says which field, what happened and how to fix it | WCAG 3.3.1 Error Identification (A) and 3.3.3 Error Suggestion (AA); `design:ux-copy` (second-hand): "What happened + Why + How to fix" | **Fold into R1**: the error state is already drawn, this says what its drawing must contain. Not applied. |
-| A visible label, not a placeholder standing in for one | WCAG 3.3.2 (A) asks for "labels or instructions" and does not name placeholders; `design:accessibility-review` (second-hand) lists "Missing form labels" | **Fold into R6** as a reading of "labelled inputs" if the owner wants it: no primary text read here states it in those words. |
-| Interaction states of a component: hover, active, disabled, loading | `design:design-system` (second-hand); Material Design 3 on states (not read, from memory) | **Fold into R7**: a new component draws its states. R1 covers the states of the data, not of the control. Not applied. |
+| Colour is never the only signal (an error is red and also says so) | WCAG 1.4.1 Use of Color, Level A: "Color is not used as the only visual means of conveying information, indicating an action, prompting a response, or distinguishing a visual element." Apple, Accessibility: "Convey information with more than color alone." | **Adopted, folded into R4**, the rule that already measures colour: "colour is never the only signal". Level A, visible on a mockup. The strongest candidate of the list. |
+| Focus is not hidden behind a sticky header, a cookie bar or a sheet | WCAG 2.4.11 Focus Not Obscured (Minimum), Level AA, new in 2.2 | **Adopted, folded into R6**: "focus is never hidden by sticky parts". It bites when a screen has sticky or overlaid parts. |
+| A destructive action is never the primary one | Apple, Buttons: "Don't assign the primary role to a button that performs a destructive action, even if that action is the most likely choice." | **Adopted, folded into R3**: "a destructive action is never the primary one". Visible on a mockup. |
+| An error says which field, what happened and how to fix it | WCAG 3.3.1 Error Identification (A) and 3.3.3 Error Suggestion (AA); `design:ux-copy` (second-hand): "What happened + Why + How to fix" | **Adopted, folded into R1**: the error state is already drawn, this says what its drawing must contain, "what went wrong and how to fix it". |
+| A visible label, not a placeholder standing in for one | WCAG 3.3.2 (A) asks for "labels or instructions" and does not name placeholders; `design:accessibility-review` (second-hand) lists "Missing form labels" | **Adopted, folded into R6** as a reading of "labelled inputs", the owner's choice: "a placeholder is never the label". No primary text read here states it in those words. |
+| Interaction states of a component: hover, active, disabled, loading | `design:design-system` (second-hand); Material Design 3 on states (not read, from memory) | **Adopted, folded into R7**: "a new component draws its interaction states" (hover, focus, active, disabled, where they apply; loading stays with R1). R1 covers the states of the data, not of the control. It rests on design practice: no primary text read here states it. |
 | Space between targets | WCAG 2.5.8 spacing exception; Apple, Accessibility: "about 12 points of padding around elements that include a bezel" | **Leave out**: a 44 by 44 px target already clears it. |
 | Text resized to 200 percent | WCAG 1.4.4 (AA); `design:accessibility-review` (second-hand): "Zoom to 200%" | **Leave out** as a rule: the 320 px floor now in R2 is the same test at 400 percent of 1280 px. |
 | Contrast in the dark theme too | Apple, Accessibility, quoted under R4 | **Leave out** as a rule: R4 applies to every theme the mockup draws. Worth one line in the grill when a product ships a dark theme. |
@@ -187,6 +193,14 @@ should be graded with that in mind.
   plus `mattpocock-skills:research` and `mattpocock-skills:grilling` (both
   read in full, 21 November 2026), each mapped to the rule or step it
   serves, with a checklist by hand for a repo that has none of them.
+
+Then, the candidates the owner adopted, each inside an existing rule:
+
+- R1: an error state says what went wrong and how to fix it.
+- R3: a destructive action is never the primary one.
+- R4: colour is never the only signal.
+- R6: focus is never hidden by sticky parts; a placeholder is never the label.
+- R7: a new component draws its interaction states.
 
 The count stays nine, so the script, the skill and the record format are
 unchanged.
