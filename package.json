@@ -13,7 +13,8 @@
     "node": ">=22.12"
   },
   "scripts": {
-    "test": "vitest run"
+    "test": "vitest run",
+    "budget": "node scripts/token-budget.mjs"
   },
   "devDependencies": {
     "vitest": "4.1.11"
