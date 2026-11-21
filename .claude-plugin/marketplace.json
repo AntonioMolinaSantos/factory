@@ -1,0 +1,14 @@
+{
+  "name": "factory",
+  "owner": {
+    "name": "Antonio Molina"
+  },
+  "description": "The factory: one GitHub issue in, one reviewed pull request out.",
+  "plugins": [
+    {
+      "name": "factory",
+      "source": "./plugin",
+      "description": "/factory:factory runs one ready-for-agent issue to one reviewed pull request to dev (plugin/docs/method/factory.md); /factory:ux-grill approves a design before a screen is built (plugin/docs/conventions/ux-design.md)."
+    }
+  ]
+}
