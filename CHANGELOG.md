@@ -16,8 +16,13 @@
   cannot drift: the label applier at intake, the merger of a spec or plan,
   the mergers of a design spec and its mockup folder, and the author of a
   guardrail stop. The guardrail read now returns every stop with its
-  author's permission and the script keeps the last one from a writer; the
+  author's permission and the script keeps the last one that counts; the
   agent no longer filters them. `WRITERS` is read in that one place.
+- **A stop whose author's permission cannot be read counts as a stop.** Only
+  a stop from an author read as below write, and not the owner, is dropped.
+  Doubt stops: a write collaborator's stop in a cloud session, where the
+  permission call answers 403, still holds the run, and the factory's own
+  stop still dates the stop so a later relabel can clear it.
 - **Unchanged, fail closed:** an organisation repository, or any login other
   than the user owner, still needs the permission read, and a failed read
   refuses as before. A permission the intake did not report as read

@@ -666,8 +666,11 @@ if (tripped.length) {
     },
   )
   const at = (t) => (typeof t === 'string' && /^\d{4}-\d{2}-\d{2}T/.test(t) ? Date.parse(t) : NaN)
-  // Only a stop a writer posted counts (writer(), as everywhere); the latest one.
-  const stops = history && Array.isArray(history.stops) ? history.stops.filter((x) => x && writer(x.author, x.permission, x.permissionRead, history)) : []
+  // A stop counts unless its author was read as below write and is not the
+  // owner: a writer's stop counts (writer(), as everywhere), and so does one
+  // whose permission could not be read, since an unread permission is doubt
+  // and doubt stops. The latest one dates the stop.
+  const stops = history && Array.isArray(history.stops) ? history.stops.filter((x) => x && (x.permissionRead !== true || writer(x.author, x.permission, x.permissionRead, history))) : []
   const stopAt = stops.length ? Math.max(...stops.map((x) => at(x.createdAt))) : NaN
   const labelledAt = history ? at(history.readyLabelledAt) : NaN
   const cleared = Boolean(history && history.read && labelledAt > stopAt)
