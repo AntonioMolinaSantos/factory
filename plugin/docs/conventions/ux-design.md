@@ -80,9 +80,8 @@ has it (the grill skill's "Borrowed skills" says which); its finding is
 evidence for a rule's line, never the line. Every rule also keeps a
 checklist by hand, so the grill works with no other plugin installed:
 [`ux-checklists.md`](ux-checklists.md). Read it only for a rule whose skill
-is not installed, or not at the vetted version, and for the three checks no
-skill makes: R1's states against the data model, R4's decoration over text,
-R6's focus under sticky parts.
+is not installed, or not at the vetted version. The three checks no skill
+makes are steps of the grill skill.
 
 Skills that draw and polish a mockup: guided in [the grill skill](../../skills/ux-grill/SKILL.md)
 only, vetted in [`../research/drawing-skills.md`](../research/drawing-skills.md).

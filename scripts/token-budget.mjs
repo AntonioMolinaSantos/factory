@@ -3,8 +3,9 @@
 // rounded up per file, which is close enough to see growth and cheap enough to
 // run with no dependency. Three groups:
 // - the always-read set, what every grill loads: the ux-grill skill and the
-//   convention. budget.json at the root holds its ceiling, and
-//   tests/token-budget.test.mjs fails a pull request that goes over it;
+//   convention. budget.json at the root is the one place its list is written
+//   (alwaysRead.files) and holds its ceiling; tests/token-budget.test.mjs
+//   fails a pull request that goes over it;
 // - each file read on demand: the checklists by hand, the two research
 //   records and the method;
 // - the factory script.
@@ -17,11 +18,10 @@ const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 
 export const ESTIMATE = "tokens estimated as characters divided by 4, rounded up per file; not a tokenizer count";
 
-export const GROUPS = [
-  { key: "alwaysRead", label: "Always read, every grill", files: [
-    "plugin/skills/ux-grill/SKILL.md",
-    "plugin/docs/conventions/ux-design.md",
-  ] },
+// The always-read list is budget.json's alwaysRead.files, read by groups().
+const ALWAYS_READ = { key: "alwaysRead", label: "Always read, every grill" };
+
+const OTHER_GROUPS = [
   { key: "onDemand", label: "Read on demand", files: [
     "plugin/docs/conventions/ux-checklists.md",
     "plugin/docs/research/ux-rules-sources.md",
@@ -33,12 +33,22 @@ export const GROUPS = [
   ] },
 ];
 
+export function readBudget(root = ROOT) {
+  const file = path.join(root, "budget.json");
+  return existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : null;
+}
+
+export function groups(root = ROOT, budget = readBudget(root)) {
+  return [{ ...ALWAYS_READ, files: budget?.alwaysRead?.files ?? [] }, ...OTHER_GROUPS];
+}
+
 // A character is a code point; CRLF counts as one, so every checkout agrees.
 export const estimate = (text) => Math.ceil([...String(text).replace(/\r\n/g, "\n")].length / 4);
 
 export function measure(root = ROOT) {
+  const budget = readBudget(root);
   const out = { estimate: ESTIMATE };
-  for (const g of GROUPS) {
+  for (const g of groups(root, budget)) {
     const files = g.files.map((rel) => {
       const abs = path.join(root, rel);
       if (!existsSync(abs)) return { path: rel, missing: true, characters: 0, tokens: 0 };
@@ -47,8 +57,7 @@ export function measure(root = ROOT) {
     });
     out[g.key] = { label: g.label, files, total: files.reduce((s, f) => s + f.tokens, 0) };
   }
-  const budgetFile = path.join(root, "budget.json");
-  const ceiling = existsSync(budgetFile) ? JSON.parse(readFileSync(budgetFile, "utf8")).alwaysRead?.ceiling ?? null : null;
+  const ceiling = budget?.alwaysRead?.ceiling ?? null;
   out.budget = { ceiling, within: ceiling === null ? null : out.alwaysRead.total <= ceiling };
   return out;
 }
@@ -62,8 +71,8 @@ export function markdown(m) {
     "| Set | File | Characters | Tokens |",
     "| --- | --- | ---: | ---: |",
   ];
-  for (const g of GROUPS) {
-    const group = m[g.key];
+  for (const key of [ALWAYS_READ.key, ...OTHER_GROUPS.map((g) => g.key)]) {
+    const group = m[key];
     for (const f of group.files) {
       lines.push(`| ${group.label} | \`${f.path}\` | ${f.missing ? "absent" : n(f.characters)} | ${f.missing ? "·" : n(f.tokens)} |`);
     }
