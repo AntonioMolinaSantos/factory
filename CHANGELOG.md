@@ -16,6 +16,15 @@
 - **The grill borrows existing skills, each for one job**, and works without
   them: the convention gains "How each rule is checked", a checklist by hand
   per rule beside the skill that does it when installed.
+- **The grill's drawing and polish steps may use third-party skills, never
+  required and never installed by the grill.** Drawing: `frontend-design`
+  (Anthropic's plugin) when installed, else by hand. A style direction, only
+  when the owner asks: `design-taste-frontend` or `ui-ux-pro-max`. Polish
+  and motion after the layout is approved: `impeccable`, its `polish` and
+  `animate` commands, motion under R6. Each was vetted, with its licence,
+  the version read, what it installs and runs, and its conditions:
+  `plugin/docs/research/drawing-skills.md`. Every screen still ends in the
+  nine rules and the grill.
 
 ## 0.6.0, 21 November 2026
 
