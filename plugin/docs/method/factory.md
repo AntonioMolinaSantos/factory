@@ -6,7 +6,8 @@ first calibration runs (section 10); revised 24 October 2026 for 0.5.0:
 risk tiers (section 13), past decisions in every review (section 4), shorter
 confirmation rounds, Codex collected beside the panel, bundled tickets, and
 the measurement that proves whether any of it helped (section 14); revised
-21 November 2026 for 0.6.0: the UI/UX verdict (section 15). One GitHub
+21 November 2026 for 0.6.0: the UI/UX verdict (section 15), and for 0.6.1:
+the accessibility review's target sizes graded by rule R2. One GitHub
 issue in, one reviewed pull request out. The factory chains what a careful
 team does by hand (spec, test-first build, review panel, the review loop,
 the merge rule) into one saved workflow,
