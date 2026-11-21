@@ -1799,6 +1799,9 @@ describe("factory workflow: 0.6.0 the UI/UX verdict", () => {
     expect(p).toMatch(/design-critique/);
     expect(p).toMatch(/accessibility-review/);
     expect(p).toMatch(/ux-copy/);
+    // The skill audits WCAG 2.1 and lists 44 px as AA: target sizes are graded by R2's figures.
+    expect(p).toMatch(/accessibility-review audits WCAG 2\.1[^.]*44 px[^.]*rule R2 \(24 by 24 px is the AA floor/);
+    expect(METHOD).toMatch(/audits WCAG 2\.1 and lists 44 px targets as\s+AA[^.]*rule R2/);
     expect(calls.find((c) => c.label === "report").prompt).toContain('"ux": "needed"');
   });
 
@@ -1811,6 +1814,7 @@ describe("factory workflow: 0.6.0 the UI/UX verdict", () => {
     expect(p).toMatch(/design-critique/);
     expect(p).toMatch(/accessibility-review/);
     expect(p).toMatch(/P2, never P1/);
+    expect(p).toMatch(/accessibility-review audits WCAG 2\.1[^.]*44 px[^.]*rule R2/);
     expect(p).not.toContain("docs/design/");
   });
 

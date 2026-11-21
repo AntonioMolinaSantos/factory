@@ -128,6 +128,7 @@ plugin/                           the plugin, named factory
   skills/ux-grill/SKILL.md        /factory:ux-grill
   docs/method/factory.md          the method
   docs/conventions/               the rules the script and the skill rely on
+  docs/research/                  the sources behind the rules, the vetted drawing skills
   docs/runbook/factory.md         install, runs, nightly, calibration
 tests/                            the workflow's guards, the UI/UX rule, the layout
 package.json                      the test tooling (vitest), outside the plugin

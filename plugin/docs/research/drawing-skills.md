@@ -20,9 +20,11 @@ convention ([`../conventions/ux-design.md`](../conventions/ux-design.md)).
 - **No install command is given here.** None was run, so none is verified.
   The upstream README of each repository carries its own; read it, and what
   this file says the install writes, before running it.
-- **A verdict holds for the version read.** A later version is not vetted. A
-  skill that runs scripts or brings other skills with it is used at the
-  pinned version or commit, or read again first.
+- **A verdict holds for the version read.** A later version is not vetted.
+  A skill is used only when its installed version matches the one named
+  here, or the owner accepts the difference; otherwise it is treated as
+  absent and the step is done by hand. A skill that runs scripts or brings
+  other skills with it is used at the pinned commit, or read again first.
 - **Verdicts.** *Recommended*: safe to use as described. *Recommended with
   conditions*: it runs code, writes files or calls the network, each stated
   plainly, and it is used only inside the conditions listed. *Not vetted*: it
@@ -34,7 +36,7 @@ convention ([`../conventions/ux-design.md`](../conventions/ux-design.md)).
 | --- | --- | --- | --- | --- | --- |
 | `frontend-design` | `anthropics/claude-plugins-official`, `plugins/frontend-design` | Apache-2.0 | plugin 1.1.1, commit `73c8cf3` | 5, drawing (the default) | **Recommended** |
 | `design-taste-frontend` | `Leonxlnx/taste-skill` | MIT | 2.5.1, tag `v2.5.1`, commit `f6b7657` | 5, a style option | **Recommended with conditions** |
-| `ui-ux-pro-max` | `nextlevelbuilder/ui-ux-pro-max-skill` | MIT | 2.15.0, `main` at commit `f76d165` | 5, a style option | **Recommended with conditions** |
+| `ui-ux-pro-max` | `nextlevelbuilder/ui-ux-pro-max-skill` | MIT | manifests say 2.15.0, `main` at commit `f76d165` (not tag `v2.15.0`) | 5, a style option | **Recommended with conditions** |
 | `impeccable`, its `polish` and `animate` commands | `pbakaus/impeccable` | Apache-2.0 | skill 4.10.0, engine 0.1.27, commit `b49177d` | 7, polish and motion | **Recommended with conditions** |
 
 None was unreadable, so none is listed as not vetted. Three of the four do
@@ -47,6 +49,7 @@ far more than their name suggests: read the conditions.
   that repository's marketplace file.
 - **Licence.** Apache-2.0 (`LICENSE` in the plugin, `LICENSE.txt` beside the
   skill).
+- **Version read.** Plugin 1.1.1, at commit `73c8cf3`.
 - **What it installs.** Five files: the plugin manifest, a README, the two
   licence files and one `SKILL.md` of about 9 kB. No script, no hook, no
   agent, no data, no network call, nothing written anywhere.
@@ -62,8 +65,8 @@ far more than their name suggests: read the conditions.
   palette and typefaces. The convention draws on the repo's real tokens
   (R4). The skill itself says the brief's own words always win, so the brief
   must pin the tokens: the repo's colours, type, spacing and radius are the
-  palette, and the skill's freedom is layout, hierarchy, copy and the one
-  bold element. It also invents copy when the brief has none; R5 wants the
+  palette, and the skill's freedom is layout, hierarchy and the one bold
+  element. It also invents copy when the brief has none; R5 wants the
   real copy in every locale, so the brief carries it.
 - **Verdict: recommended, the default for drawing.** Nothing in it can harm
   a repo. Its output is still graded by the nine rules.
@@ -79,9 +82,9 @@ far more than their name suggests: read the conditions.
   a `SKILL.md` of 381 lines, twenty-two reference files, ten Node scripts
   under `scripts/` plus dealers and checkers under `assets/`, and a kit of
   CSS, JavaScript, HTML fragments, shaders, bundled photographs and icons.
-  Upstream documents three ways in (the `npx skills` installer, a Claude
-  Code plugin, and `install.sh`, which links the folder into
-  `~/.claude/skills`). No script runs at install. It needs Node 22 or newer
+  Upstream documents three ways in (a `skills` installer run through npm's
+  package runner, a Claude Code plugin, and `install.sh`, which links the
+  folder into `~/.claude/skills`). No script runs at install. It needs Node 22 or newer
   and Chrome, Edge or Chromium at use.
 - **What runs at use.** The skill tells the agent to copy its `assets/`
   folder into the project (the `public` folder of a framework project), to
@@ -92,7 +95,10 @@ far more than their name suggests: read the conditions.
 - **A Stop hook.** The `SKILL.md` front matter declares a Stop hook: once the
   skill has been invoked in Claude Code, `scripts/gate.mjs` runs each time
   the agent finishes, with a timeout of 600 seconds, and holds the finish
-  while a build is open and a check fails (three rounds at most).
+  while a build is open and a check fails (three rounds at most). The hook
+  comes with the skill: invoking it in a session registers the hook there,
+  so the skill cannot be used in the repo without arming its gate in the
+  repo.
 - **Network.** Upstream states it needs no API key and installs nothing. At
   use it loads Google Fonts in the pages it builds, and its photograph and
   icon scripts fetch from Wikimedia Commons, Unsplash and an icon CDN when
@@ -108,10 +114,14 @@ far more than their name suggests: read the conditions.
 - **Verdict: recommended with conditions.** Only when the owner asks for a
   direction, only for a public marketing or landing screen, and only as a
   direction: the mockup is still drawn on the repo's tokens at the
-  convention's two widths. Its kit is not copied into the repo, and its gate
-  is not armed there, unless the owner says so. Pinned to 2.5.1 (commit
-  `f6b7657`). For an application screen it is the wrong tool: use the
-  default.
+  convention's two widths. It is never invoked in the repo: either it runs
+  in a scratch copy outside the repo (a folder of its own, never a worktree
+  of the repo), where its hook, kit and screenshots stay, and only the
+  direction sheet comes back; or its direction is taken from its rules,
+  its `SKILL.md` and references read as text, without invoking it. Its kit
+  is not copied into the repo unless the owner says so. Pinned to 2.5.1
+  (commit `f6b7657`). For an application screen it is the wrong tool: use
+  the default.
 
 ## ui-ux-pro-max
 
@@ -130,8 +140,8 @@ far more than their name suggests: read the conditions.
   copies bundled files into the project folder of the chosen assistant, or
   into the home folder with `--global`, which is a write outside the
   project; with `--legacy` it downloads a release archive from GitHub and
-  unpacks it; its `update` command runs a global npm install of itself. It
-  has no install script of its own in `package.json`.
+  unpacks it; its `update` command reinstalls itself globally through npm.
+  It has no install script of its own in `package.json`.
 - **What runs at use.** `python scripts/search.py "<query>"` with a domain,
   a stack or `--design-system`. The five scripts import the Python standard
   library only and open no connection (their imports were read; the one
@@ -143,8 +153,8 @@ far more than their name suggests: read the conditions.
 - **The six other skills were not read in full.** A search of their scripts
   found one that calls external image-generation services with API keys read
   from the environment (in `design`), one that names stock-photograph URLs
-  for backgrounds (in `design-system`) and one that runs `npx` to add
-  components to a project (in `ui-styling`). They are not vetted and the grill does not use them.
+  for backgrounds (in `design-system`) and one that runs npm's package runner
+  to add components to a project (in `ui-styling`). They are not vetted and the grill does not use them.
 - **Where it pulls against the convention.** It proposes palettes, font
   pairings and a generated design system. The convention draws on the repo's
   tokens, so those outputs are a direction to discuss, never values to paste.
@@ -156,8 +166,11 @@ far more than their name suggests: read the conditions.
   (a domain or `--design-system` search), never with `--persist` in the repo
   unless the owner asks for the files. Stated plainly: it runs Python
   scripts, and the plugin installs six more skills, some of which call
-  outside services. Pinned to 2.15.0 (upstream tags it `v2.15.0`; the text
-  read was `main` at `f76d165`, whose manifests say 2.15.0).
+  outside services. Pinned to commit `f76d165`, the text read (`main` on
+  21 November 2026, whose manifests say 2.15.0). Upstream's tag `v2.15.0` is
+  a different commit, `a38d04c`, which was not read: a version of 2.15.0 is
+  therefore not enough, and an install is used only from the commit read,
+  or when the owner accepts the difference.
 
 ## impeccable, the polish and animate commands
 
@@ -169,9 +182,9 @@ far more than their name suggests: read the conditions.
   reference file loaded on demand; five sub-agents; a launcher script; and a
   `hooks.json` with **three hooks**: SessionStart, PostToolUse on every Edit
   and Write, and Stop. Each hook runs the launcher. Upstream also documents
-  an npm installer, which offers the hook and writes it into the settings of
-  the coding tool, and a manual copy of the skill folder, which upstream
-  says skips the hook and the sub-agents.
+  an installer published on npm, which offers the hook and writes it into
+  the settings of the coding tool, and a manual copy of the skill folder,
+  which upstream says skips the hook and the sub-agents.
 - **A downloaded binary.** The launcher (`scripts/impeccable`, read in full)
   runs a prebuilt engine. When none is beside it, on the PATH or in the
   cache, it downloads the binary for the platform from the repository's
