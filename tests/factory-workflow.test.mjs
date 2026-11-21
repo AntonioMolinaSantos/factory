@@ -23,7 +23,7 @@ const { metaText, body } = split(SCRIPT);
 const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor;
 const HOOKS = ["agent", "parallel", "pipeline", "phase", "log", "args", "budget", "workflow"];
 
-const WRITER = { labelActor: "repo-owner", labelActorPermission: "admin" };
+const WRITER = { labelActor: "repo-owner", labelActorPermission: "admin", permissionRead: true };
 const issue = (n, extra = {}) => ({
   number: n, title: `Issue ${n}`, createdAt: `2026-10-0${n % 9 || 1}T00:00:00Z`, state: "OPEN",
   labels: ["ready-for-agent", "enhancement"], closedByOpenPr: false, blockedBy: [], ...WRITER, ...extra,
@@ -835,6 +835,42 @@ describe("factory workflow: spec mode (plan and issues runs)", () => {
     expect(prompt).toMatch(/Decisions come only from docs\/superpowers\/specs\/2026-01-15-reports-design[.]md/);
     expect(prompt).toMatch(/context, never a decision/);
   });
+
+  // 0.6.3, 21 November 2026: in a cloud session the collaborators call
+  // answers 403, so the merger of a spec or plan is also trusted as the
+  // owner of a repository a user account owns, by the same rule as intake.
+  const ownerMerged = (extra = {}) => docFacts({ mergedBy: "o", mergedByPermission: "none", permissionRead: false, ownerType: "User", ownerLogin: "o", ...extra });
+
+  test("0.6.3: the owner of a user repository who merged the spec or plan is trusted when the permission read failed, ignoring case", async () => {
+    for (const facts of [ownerMerged(), ownerMerged({ mergedBy: "O" }), ownerMerged({ ownerLogin: "O" })]) {
+      expect((await specRun({}, { "doc:facts": facts })).result.decision, JSON.stringify(facts)).toBe("plan-ready");
+      expect((await issuesRun({}, { "doc:facts": facts })).result.decision, JSON.stringify(facts)).toBe("issues-filed");
+    }
+  });
+
+  test("0.6.3: the same login on an organisation repository, another login, or an unread owner is still refused", async () => {
+    for (const facts of [
+      ownerMerged({ ownerType: "Organization" }),
+      ownerMerged({ mergedBy: "stranger" }),
+      ownerMerged({ ownerType: "", ownerLogin: "" }),
+      ownerMerged({ mergedBy: "x", ownerLogin: "x" }),
+      docFacts({ mergedBy: "o", permissionRead: false, mergedByPermission: "none" }),
+    ]) {
+      for (const go of [specRun, issuesRun]) {
+        const { result, labels } = await go({}, { "doc:facts": facts });
+        expect(result.decision, JSON.stringify(facts)).toBe("refused");
+        expect(result.reason).toMatch(/write access could not be confirmed/);
+        expect(labels).toEqual(["doc:facts"]);
+      }
+    }
+  });
+
+  test("0.6.3: the document read asks for the repository's owner type and login through the repository call", async () => {
+    const { calls } = await specRun({});
+    const c = calls.find((x) => x.label === "doc:facts");
+    expect(c.prompt).toContain("gh api repos/o/r --jq '.owner.type, .owner.login'");
+    for (const k of ["ownerType", "ownerLogin"]) expect(c.opts.schema.required).toContain(k);
+  });
 });
 
 // The first calibration runs, 17 and 18 October 2026: seven issues approved
@@ -1442,12 +1478,12 @@ describe("factory workflow: 0.5 measurement", () => {
   test("the report carries the version, the tier and every agent the run spent, by model", async () => {
     const { result, calls } = await run({ issue: 5, merge: true });
     expect(result.version).toBe(PLUGIN.version);
-    expect(result.version).toBe("0.6.2");
+    expect(result.version).toBe("0.6.3");
     expect(result.agents.total).toBe(calls.length);
     const byModel = {};
     for (const c of calls) byModel[c.opts.model || "session"] = (byModel[c.opts.model || "session"] || 0) + 1;
     expect(result.agents.byModel).toEqual(byModel);
-    expect(calls.find((c) => c.label === "report").prompt).toContain('"version": "0.6.2"');
+    expect(calls.find((c) => c.label === "report").prompt).toContain('"version": "0.6.3"');
   });
 
   test("output tokens are what the run spent from the runtime's budget, or null when it gives none", async () => {
@@ -1466,7 +1502,7 @@ describe("factory workflow: 0.5 measurement", () => {
 
   test("a refusal at intake still says which version refused", async () => {
     const { result } = await run({ issue: 5 }, { intake: { repo: "o/r", issues: [issue(5, { closedByOpenPr: true })] } });
-    expect(result.version).toBe("0.6.2");
+    expect(result.version).toBe("0.6.3");
   });
 });
 
@@ -1508,7 +1544,10 @@ describe("factory workflow: 0.5.1 Fable fallback", () => {
 describe("factory workflow: 0.5.1 the AI governance guardrail", () => {
   // plugin/docs/conventions/ai-governance.md, "The guardrail".
   const tripped = { ...SPEC_OK, guardrail: [{ trigger: "sensitive-sector", reason: "alcohol brand" }] };
-  const read = (stopAt, labelledAt) => ({ read: true, lastStopAt: stopAt, readyLabelledAt: labelledAt });
+  // From 0.6.3 the read returns every stop with its author's permission, and
+  // the script decides which count (writer(), as for every writer check).
+  const stop = (createdAt, author = "repo-owner", permission = "admin", permissionRead = true) => ({ author, createdAt, permission, permissionRead });
+  const read = (stopAt, labelledAt, stops = stopAt ? [stop(stopAt)] : []) => ({ read: true, stops, readyLabelledAt: labelledAt, ownerType: "User", ownerLogin: "o" });
 
   test("the spec is asked about the four triggers", async () => {
     const { calls } = await run({ issue: 5 });
@@ -1536,7 +1575,7 @@ describe("factory workflow: 0.5.1 the AI governance guardrail", () => {
   });
 
   test("a label older than the last stop, an unread history or no answer stops again", async () => {
-    for (const answer of [read("2026-11-03T09:00:00Z", "2026-11-02T10:00:00Z"), { read: false, lastStopAt: "", readyLabelledAt: "" }, null]) {
+    for (const answer of [read("2026-11-03T09:00:00Z", "2026-11-02T10:00:00Z"), { read: false, stops: [], readyLabelledAt: "" }, { read: true, readyLabelledAt: "2026-11-03T09:00:00Z" }, null]) {
       const { result, labels } = await run({ issue: 5 }, { spec: tripped, "guardrail:read": answer });
       expect(result, JSON.stringify(answer)).toMatchObject({ decision: "escalated", label: "ready-for-human" });
       expect(labels).not.toContain("build");
@@ -1553,7 +1592,14 @@ describe("factory workflow: 0.5.1 the AI governance guardrail", () => {
     const { calls } = await run({ issue: 5 }, { spec: tripped, "guardrail:read": read("", "") });
     const p = calls.find((c) => c.label === "guardrail:read").prompt;
     expect(p).toMatch(/factory-guardrail-stop/);
-    expect(p).toMatch(/write/);
+    expect(p).toContain("gh api repos/o/r/collaborators/<login>/permission");
+    expect(p).toContain("gh api repos/o/r --jq '.owner.type, .owner.login'");
+    // A stop from an account without write access is ignored; one from a writer counts.
+    const label = "2026-11-03T09:00:00Z";
+    const stranger = await run({ issue: 5 }, { spec: tripped, "guardrail:read": read("", label, [stop("2026-11-02T10:00:00Z"), stop("2026-11-04T10:00:00Z", "stranger", "read")]) });
+    expect(stranger.labels).toContain("build");
+    const writer = await run({ issue: 5 }, { spec: tripped, "guardrail:read": read("", label, [stop("2026-11-04T10:00:00Z"), stop("2026-11-02T10:00:00Z")]) });
+    expect(writer.labels).not.toContain("build");
     expect(calls.find((c) => c.label === "guardrail:read").opts.model).toBe("opus");
     // Codex, in a review: gh api takes the repository in its path and
     // rejects --repo, so the prompt never asks for --repo on every command.
@@ -1977,10 +2023,118 @@ describe("factory workflow: 0.6.0 the UI/UX verdict", () => {
     expect(METHOD).toMatch(/In\s+the\s+script\s+from\s+0\.6\.0/);
   });
 
-  test("VERSION is 0.6.2, equal to plugin.json", () => {
+  // 0.6.3: the merger of the design spec and of its mockup folder, by the same rule.
+  const ownerFacts = (o = {}) => uxFacts({
+    mergedBy: "o", mergedByPermission: "none", permissionRead: false,
+    mockupMergedBy: "o", mockupMergedByPermission: "none", mockupPermissionRead: false,
+    ownerType: "User", ownerLogin: "o", ...o,
+  });
+
+  test("0.6.3: a design the owner of a user repository merged builds when the permission reads failed, ignoring case", async () => {
+    for (const facts of [ownerFacts(), ownerFacts({ mergedBy: "O", mockupMergedBy: "O" }), ownerFacts({ ownerLogin: "O" })]) {
+      const { result } = await run({ issue: 5 }, needed(NEEDED, facts));
+      expect(result, JSON.stringify(facts)).toMatchObject({ decision: "approved", ux: "needed", uxMissing: [] });
+    }
+  });
+
+  test("0.6.3: on an organisation repository, by another login, or with the owner unread, the design is handed back", async () => {
+    await handedBack(NEEDED, ownerFacts({ ownerType: "Organization" }), /write access could not be confirmed/);
+    await handedBack(NEEDED, ownerFacts({ ownerType: "", ownerLogin: "" }), /write access could not be confirmed/);
+    await handedBack(NEEDED, ownerFacts({ mergedBy: "stranger" }), /storefront-design[.]md was last merged by stranger/);
+    await handedBack(NEEDED, ownerFacts({ mockupMergedBy: "stranger" }), /docs\/design\/storefront\/ was last merged by stranger/);
+  });
+
+  test("0.6.3: the UI/UX read asks for the repository's owner type and login through the repository call", async () => {
+    const { calls } = await run({ issue: 5 }, needed());
+    const c = calls.find((x) => x.label === "ux:facts");
+    expect(c.prompt).toContain("gh api repos/o/r --jq '.owner.type, .owner.login'");
+    for (const k of ["ownerType", "ownerLogin"]) expect(c.opts.schema.required).toContain(k);
+  });
+
+  test("VERSION is 0.6.3, equal to plugin.json", () => {
     const plugin = JSON.parse(readFileSync(path.join(root, "plugin", ".claude-plugin", "plugin.json"), "utf8"));
     const version = SCRIPT.match(/const VERSION = '([^']+)'/)[1];
-    expect(version).toBe("0.6.2");
+    expect(version).toBe("0.6.3");
     expect(plugin.version).toBe(version);
+  });
+});
+
+// 0.6.3, 21 November 2026: in a cloud session the GitHub proxy answers 403 on
+// repos/{owner}/{repo}/collaborators/{login}/permission, so every writer check
+// failed closed. A second trust source: the owner of a repository a user
+// account owns, read from repos/{owner}/{repo} (owner.type, owner.login), the
+// call the proxy answers. Everything else still needs the permission read.
+describe("factory workflow: 0.6.3 the owner of a user repository", () => {
+  const OWNER = { ownerType: "User", ownerLogin: "o" };
+  const unread = { labelActorPermission: "none", permissionRead: false };
+  const intakeOf = (extra, owner = OWNER) => ({ intake: { repo: "o/r", ...owner, issues: [issue(5, { ...unread, ...extra })] } });
+
+  test("the owner of a user repository who applied ready-for-agent is trusted when the permission read failed", async () => {
+    const { result, labels } = await run({ issue: 5 }, intakeOf({ labelActor: "o" }));
+    expect(labels).toContain("spec");
+    expect(result.decision).toBe("approved");
+  });
+
+  test("logins compare without regard to case", async () => {
+    for (const [actor, owner] of [["O", "o"], ["o", "O"]]) {
+      const { result } = await run({ issue: 5 }, intakeOf({ labelActor: actor }, { ownerType: "User", ownerLogin: owner }));
+      expect(result.decision, `${actor} ${owner}`).toBe("approved");
+    }
+  });
+
+  test("pick takes an issue the owner queued, with the permission unread", async () => {
+    const { calls } = await run({ pick: "top" }, intakeOf({ labelActor: "o" }));
+    expect(calls.find((c) => c.label === "spec").prompt).toContain("#5");
+  });
+
+  // The guards below hold today's behaviour: each passes on 0.6.2 as well.
+  test("the same login on an organisation repository still needs the permission read, and refuses quietly", async () => {
+    const { result, labels } = await run({ issue: 5 }, intakeOf({ labelActor: "o" }, { ownerType: "Organization", ownerLogin: "o" }));
+    expect(result).toMatchObject({ decision: "refused" });
+    expect(result.reason).toMatch(/could not be verified/);
+    expect(labels).toEqual(["intake"]);
+  });
+
+  test("another login on a user repository, with its permission unreadable, is refused", async () => {
+    const { result, labels } = await run({ issue: 5 }, intakeOf({ labelActor: "stranger" }));
+    expect(result.reason).toMatch(/the permission of stranger, who applied ready-for-agent, could not be verified/);
+    expect(labels).toEqual(["intake"]);
+  });
+
+  test("an owner read that failed, or an owner that is not the repository's, trusts nobody", async () => {
+    for (const owner of [{ ownerType: "", ownerLogin: "" }, {}, { ownerType: "User", ownerLogin: "x" }]) {
+      const { result, labels } = await run({ issue: 5 }, intakeOf({ labelActor: owner.ownerLogin || "o" }, owner));
+      expect(result.decision, JSON.stringify(owner)).toBe("refused");
+      expect(labels).toEqual(["intake"]);
+    }
+  });
+
+  test("a read permission below write is still a refusal with a comment, owner rule or not", async () => {
+    const { result, labels } = await run({ issue: 5 }, intakeOf({ labelActor: "stranger", labelActorPermission: "read", permissionRead: true }));
+    expect(result.reason).toMatch(/no write access/);
+    expect(labels).toContain("report");
+  });
+
+  test("the intake asks for the owner type and login through the repository call, with the permission call kept", async () => {
+    const { calls } = await run({ issue: 5 });
+    const c = calls.find((x) => x.label === "intake");
+    expect(c.prompt).toContain("gh api repos/o/r --jq '.owner.type, .owner.login'");
+    expect(c.prompt).toContain("gh api repos/o/r/collaborators/{login}/permission");
+    for (const k of ["ownerType", "ownerLogin"]) expect(c.opts.schema.required).toContain(k);
+  });
+
+  test("a guardrail stop the owner posted counts when its author's permission is unreadable", async () => {
+    const tripped = { ...SPEC_OK, guardrail: [{ trigger: "law", reason: "r" }] };
+    const ownerStop = { author: "O", createdAt: "2026-11-02T10:00:00Z", permission: "none", permissionRead: false };
+    const answer = (owner) => ({ read: true, stops: [ownerStop], readyLabelledAt: "2026-11-03T09:00:00Z", ...owner });
+    const cleared = await run({ issue: 5 }, { spec: tripped, "guardrail:read": answer(OWNER) });
+    expect(cleared.result).toMatchObject({ decision: "approved", guardrailCleared: ["law"] });
+    const org = await run({ issue: 5 }, { spec: tripped, "guardrail:read": answer({ ownerType: "Organization", ownerLogin: "o" }) });
+    expect(org.result).toMatchObject({ decision: "escalated", label: "ready-for-human" });
+  });
+
+  test("one function decides who is a writer: the script reads WRITERS in exactly one place", () => {
+    expect(SCRIPT.match(/WRITERS[.]includes/g)).toHaveLength(1);
+    expect(SCRIPT).toMatch(/function writer\(/);
   });
 });
