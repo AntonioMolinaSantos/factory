@@ -7,6 +7,12 @@
   (reflow down to 320 px, targets of 44 by 44 px with the inline exception),
   R4 (3 to 1 for controls and their states), R9 (a confirmation only where
   the action cannot be undone). The count stays nine.
+- **Six candidates from that reading are adopted, each folded into its
+  rule**, never a tenth: R1 (an error state says what went wrong and how to
+  fix it), R3 (a destructive action is never the primary one), R4 (colour is
+  never the only signal), R6 (focus is never hidden by sticky parts, and a
+  placeholder is never the label), R7 (a new component draws its interaction
+  states). Each has its check by hand in "How each rule is checked".
 - **The grill borrows existing skills, each for one job**, and works without
   them: the convention gains "How each rule is checked", a checklist by hand
   per rule beside the skill that does it when installed.

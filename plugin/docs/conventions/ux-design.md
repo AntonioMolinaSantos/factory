@@ -47,13 +47,13 @@ checkable on a mockup or a screenshot, which is the test for adding a tenth.
 
 | Rule | Name | What the screen shows |
 | --- | --- | --- |
-| R1 | Every state is drawn | Empty, loading, error, long or partial content, success. One drawing per state, not a sentence promising it. Only the states the product's real flow supports: check the data model before inventing a state or rejecting one, and say in the spec why a state is not drawn |
+| R1 | Every state is drawn | Empty, loading, error, long or partial content, success. One drawing per state, not a sentence promising it. Only the states the product's real flow supports: check the data model before inventing a state or rejecting one, and say in the spec why a state is not drawn; an error state says what went wrong and how to fix it, and names the field when there is one |
 | R2 | Two widths | 375 px and 1280 px, no horizontal scroll, and none when the narrow screen is squeezed to 320 px (a data table, a map or a diagram may scroll inside its own box); touch targets of at least 44 by 44 px, a link inside a sentence excepted |
-| R3 | One primary action | One per screen, and the order of importance reads at a glance |
-| R4 | Tokens only | No colour, spacing or radius typed by hand; text contrast of at least 4.5 to 1, and at least 3 to 1 for what identifies a control or its state (an input's border, an icon, the focus ring), both measured rather than judged by eye; no decoration crosses a line of text, checked by geometry (the text boxes against the decoration's edges, at both widths) rather than by eye |
+| R3 | One primary action | One per screen, and the order of importance reads at a glance; a destructive action is never the primary one |
+| R4 | Tokens only | No colour, spacing or radius typed by hand; text contrast of at least 4.5 to 1, and at least 3 to 1 for what identifies a control or its state (an input's border, an icon, the focus ring), both measured rather than judged by eye; colour is never the only signal (an error is red and also says so in words or with an icon); no decoration crosses a line of text, checked by geometry (the text boxes against the decoration's edges, at both widths) rather than by eye |
 | R5 | Real content | Real copy in every locale the repo ships, the longest realistic strings, no placeholder text |
-| R6 | Keyboard and focus | Every action reachable by keyboard, a visible focus, labelled inputs, reduced motion respected |
-| R7 | Reuse before invent | The spec names the existing component each part reuses; a new component says why none fitted |
+| R6 | Keyboard and focus | Every action reachable by keyboard; a visible focus, and focus is never hidden by sticky parts (a header, a bar, a sheet); labelled inputs, and a placeholder is never the label; reduced motion respected |
+| R7 | Reuse before invent | The spec names the existing component each part reuses; a new component says why none fitted, and a new component draws its interaction states (hover, focus, active, disabled, where they apply) |
 | R8 | The journey | Where the user arrives from, what happens after, how to go back or undo |
 | R9 | Feedback | Every action shows its result on the screen; a destructive one that cannot be undone asks first, and one that can be undone offers the undo instead |
 
@@ -63,6 +63,13 @@ by the data model, and R4's legibility now covers decoration over text. The
 third, a live defect found while drawing, is a step of the work below, not a
 rule: no mockup can show whether it was filed. So the rules stay nine, and a
 grill record keeps nine lines per screen.
+
+The reading of the primary sources (same day) found six more things a mockup
+can show. The owner adopted all of them, each folded into the rule it belongs
+to, never a tenth: what an error state says (R1), a destructive action is
+never the primary one (R3), colour is never the only signal (R4), focus never
+hidden by sticky parts and a placeholder never the label (R6), the
+interaction states of a new component (R7).
 
 ## How each rule is checked
 
@@ -75,7 +82,8 @@ line; it is never the line.
 
 - **R1.** By hand: list from the data model the states the screen can be in;
   tick each against a drawing; a state not drawn has its reason in the spec.
-  With skills: `design:ux-copy` writes the empty and the error state (what
+  Read each error drawing: it says what went wrong and how to fix it, in
+  text, beside the field it concerns when there is one. With skills: `design:ux-copy` writes the empty and the error state (what
   this is, why, what to do next).
 
 - **R2.** By hand: open each file at 375 px and 1280 px, then squeeze the
@@ -87,13 +95,17 @@ line; it is never the line.
 
 - **R3.** By hand: name the primary action of the screen; count what is
   drawn in the primary style; say what the eye lands on first and whether
-  that is the most important thing. With skills: `design:design-critique`,
+  that is the most important thing; find every destructive action (delete,
+  remove, revoke) and check that none wears the primary style. With skills: `design:design-critique`,
   its first impression and visual hierarchy parts.
 
 - **R4.** By hand: search the mockup's styles for a colour, a spacing or a
   radius that is not a token; compute the ratio of every pair of text and
   background, and of every control border, icon and focus ring; compare the
-  text boxes with the decoration's edges at both widths. With skills:
+  text boxes with the decoration's edges at both widths; view each file in
+  greyscale and check that nothing is told by colour alone (an error, a
+  status, a required field, a link in a sentence, a series of a chart): each
+  also has words, an icon or a shape. With skills:
   `design:design-system` in audit mode for values typed by hand,
   `design:accessibility-review` for the table of ratios.
 
@@ -103,14 +115,20 @@ line; it is never the line.
   translation.
 
 - **R6.** By hand: press Tab through each file; every action is reached and
-  the focus is seen at each stop; every input has a visible label tied to
-  it; anything that moves stops under the reduced-motion setting. With
-  skills: `design:accessibility-review`, its keyboard table. Its screen
-  reader table waits for the built screen: a mockup cannot show it.
+  the focus is seen at each stop, and where the screen has sticky or
+  overlaid parts (a header, a cookie bar, a sheet), scroll so that each
+  focused control passes under them: it is never wholly hidden; every input
+  has a visible label tied to it that stays when the field is filled, so a
+  placeholder is at most an example; anything that moves stops under the
+  reduced-motion setting. With skills: `design:accessibility-review`, its
+  keyboard table (it audits WCAG 2.1, so the sticky check stays by hand). Its
+  screen reader table waits for the built screen: a mockup cannot show it.
 
 - **R7.** By hand: for each part of the screen, the path of the component it
-  reuses; for a new one, what was looked at and why it did not fit. With
-  skills: `design:design-system` in extend mode, whose table of existing
+  reuses; for a new one, what was looked at and why it did not fit, and a
+  sheet in the mockup that draws its interaction states side by side (hover,
+  focus, active, disabled), each one labelled, a state that cannot apply
+  left out with the reason. With skills: `design:design-system` in extend mode, whose table of existing
   patterns is this rule.
 
 - **R8.** By hand: for each screen write where the user comes from, where
@@ -154,6 +172,15 @@ also sets 3 to 1 for controls and their states. R9: both texts accept undo in
 place of a confirmation, and Apple advises against asking when the action
 can be undone. Where a rule goes beyond level AA (44 px targets, reduced
 motion, 4.5 to 1 for large text) it is a choice, and the findings say so.
+
+The same reading listed candidates for missing rules. The owner adopted the
+six that a mockup can show, each folded into an existing rule: colour is
+never the only signal (WCAG 1.4.1, level A) into R4; focus never hidden by
+sticky parts (2.4.11, level AA) and a placeholder never the label (a reading
+of 3.3.2, level A) into R6; a destructive action never the primary one (Apple,
+Buttons) into R3; what an error state says (3.3.1, level A, and 3.3.3, level
+AA) into R1; the interaction states of a new component into R7, on design
+practice only, with no primary text read behind it.
 
 ## How the work runs
 
