@@ -28,7 +28,31 @@ exactly the work; an agent that refused it silently would take the decision
 away from them, and one that went ahead silently would too.
 
 The triggers the script knows: `platform-enforcement`, `law`, `consent`,
-`sensitive-sector`.
+`sensitive-sector`. A `sensitive-sector` entry names its sector: `adult`,
+`alcohol`, `gambling`, `minors` or `other`.
+
+### A standing clearance, for the adult sector only
+
+A repository whose whole product is in the adult industry trips the
+guardrail on every issue. Its owner can clear that sector for good with a
+file on `dev`, `docs/conventions/factory-guardrail.json`:
+
+```json
+{
+  "standingClearance": [
+    { "trigger": "sensitive-sector", "sector": "adult", "decidedBy": "<owner login>", "decidedOn": "YYYY-MM-DD", "reason": "why" }
+  ]
+}
+```
+
+- Only `sensitive-sector` with `sector` `adult` can be cleared this way. Any
+  other entry in the file is ignored: alcohol, gambling, data about minors,
+  law, consent and platform enforcement still stop the run on every issue.
+- An entry counts only with `decidedBy` and a `decidedOn` date. A missing,
+  unreadable or malformed file clears nothing.
+- The path is under the factory's denylist, so no run ever writes it: it
+  reaches `dev` only through the owner.
+- The run report lists what it cleared this way (`guardrailStanding`).
 
 ## Untrusted input
 
