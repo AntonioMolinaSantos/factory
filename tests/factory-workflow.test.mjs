@@ -2165,7 +2165,7 @@ describe("factory workflow: 0.6.3 the owner of a user repository", () => {
 describe("factory workflow: 0.6.4 the standing clearance of the adult sector", () => {
   const adult = { trigger: "sensitive-sector", sector: "adult", reason: "adult lifestyle community" };
   const FILE = JSON.stringify({ standingClearance: [{ trigger: "sensitive-sector", sector: "adult", decidedBy: "o", decidedOn: "2026-11-22", reason: "adult industry" }] });
-  const standing = (text = FILE, read = true) => ({ read, text });
+  const standing = (text = FILE, read = true, more = {}) => ({ read, text, prRead: true, mergedBy: "O", ownerType: "User", ownerLogin: "o", ...more });
   const noStop = { read: true, stops: [], readyLabelledAt: "2026-11-01T00:00:00Z", ownerType: "User", ownerLogin: "o" };
 
   test("an adult-sector trip with the repository's clearance builds, without reading the stop history", async () => {
@@ -2185,6 +2185,17 @@ describe("factory workflow: 0.6.4 the standing clearance of the adult sector", (
       standing("{not json"),
       standing(JSON.stringify({ standingClearance: [{ trigger: "sensitive-sector", sector: "adult" }] })),
       standing(JSON.stringify({ standingClearance: [{ trigger: "sensitive-sector", sector: "adult", decidedBy: "o", decidedOn: "soon" }] })),
+      standing(JSON.stringify({ standingClearance: [{ trigger: "sensitive-sector", sector: "adult", decidedBy: "o", decidedOn: "2026-13-40" }] })),
+      standing(JSON.stringify({ standingClearance: [{ trigger: "sensitive-sector", sector: "adult", decidedBy: "  ", decidedOn: "2026-11-22" }] })),
+      standing(JSON.stringify({ standingClearance: { trigger: "sensitive-sector", sector: "adult", decidedBy: "o", decidedOn: "2026-11-22" } })),
+      standing("null"),
+      // Fable, in the 0.6.4 review: only the user owner can clear, checked on
+      // GitHub, not on the file's word.
+      standing(JSON.stringify({ standingClearance: [{ trigger: "sensitive-sector", sector: "adult", decidedBy: "collaborator", decidedOn: "2026-11-22" }] })),
+      standing(FILE, true, { mergedBy: "collaborator" }),
+      standing(FILE, true, { prRead: false, mergedBy: "" }),
+      standing(FILE, true, { ownerType: "Organization" }),
+      standing(FILE, true, { ownerLogin: "someone-else" }),
     ];
     for (const s of bad) {
       const { result, labels } = await run({ issue: 5 }, { spec: { ...SPEC_OK, guardrail: [adult] }, "guardrail:standing": s, "guardrail:read": noStop });
@@ -2202,9 +2213,12 @@ describe("factory workflow: 0.6.4 the standing clearance of the adult sector", (
     for (const g of [
       { trigger: "sensitive-sector", sector: "minors", reason: "r" },
       { trigger: "sensitive-sector", sector: "alcohol", reason: "r" },
+      { trigger: "sensitive-sector", sector: "gambling", reason: "r" },
+      { trigger: "sensitive-sector", sector: "other", reason: "r" },
       { trigger: "sensitive-sector", reason: "no sector named" },
       { trigger: "law", reason: "r" },
       { trigger: "consent", reason: "r" },
+      { trigger: "platform-enforcement", reason: "r" },
     ]) {
       const { result, labels } = await run({ issue: 5 }, { spec: { ...SPEC_OK, guardrail: [g] }, "guardrail:standing": standing(wide), "guardrail:read": noStop });
       expect(result, JSON.stringify(g)).toMatchObject({ decision: "escalated", label: "ready-for-human" });
@@ -2218,6 +2232,40 @@ describe("factory workflow: 0.6.4 the standing clearance of the adult sector", (
     expect(result).toMatchObject({ decision: "escalated", label: "ready-for-human", guardrail: [law], guardrailStanding: ["sensitive-sector:adult"] });
     expect(labels).not.toContain("build");
     expect(calls.find((c) => c.label === "report").prompt).toContain("- law: unclear licence");
+  });
+
+  test("adult plus minors: the minors entry still stops", async () => {
+    const minors = { trigger: "sensitive-sector", sector: "minors", reason: "touches the age gate" };
+    const { result, labels } = await run({ issue: 5 }, { spec: { ...SPEC_OK, guardrail: [adult, minors] }, "guardrail:standing": standing(), "guardrail:read": noStop });
+    expect(result).toMatchObject({ decision: "escalated", label: "ready-for-human", guardrail: [minors] });
+    expect(labels).not.toContain("build");
+  });
+
+  test("work on age, birth dates, verification or minors is never cleared for good, whatever the label", async () => {
+    for (const f of ["src/lib/validations/dob.ts", "src/app/[locale]/profile/verify/page.tsx", "src/lib/age-gate.ts", "supabase/tests/verification_write_perimeter_test.sql", "src/lib/minors/policy.ts"]) {
+      const { result, labels } = await run({ issue: 5 }, { spec: { ...SPEC_OK, files: [...SPEC_OK.files, f], guardrail: [adult] }, "guardrail:standing": standing(), "guardrail:read": noStop });
+      expect(result, f).toMatchObject({ decision: "escalated", label: "ready-for-human" });
+      expect(labels, f).not.toContain("guardrail:standing");
+    }
+  });
+
+  test("the spec is told that age work always adds a minors entry", async () => {
+    const { calls } = await run({ issue: 5 });
+    expect(calls.find((x) => x.label === "spec").prompt).toMatch(/age, a date of birth, an age or identity check, or anyone under 18 always adds its own minors entry/);
+  });
+
+  test("the clearance read asks who merged the file and who owns the repository", async () => {
+    const { calls } = await run({ issue: 5 }, { spec: { ...SPEC_OK, guardrail: [adult] }, "guardrail:standing": standing() });
+    const c = calls.find((x) => x.label === "guardrail:standing");
+    expect(c.prompt).toContain("gh api repos/o/r/commits/<sha>/pulls");
+    expect(c.prompt).toContain("gh api repos/o/r --jq '.owner.type, .owner.login'");
+    for (const k of ["prRead", "mergedBy", "ownerType", "ownerLogin"]) expect(c.opts.schema.required).toContain(k);
+  });
+
+  test("the gate refuses a branch that changed the clearance file", async () => {
+    const files = [...SPEC_OK.files, "docs/conventions/factory-guardrail.json"];
+    const { result } = await run({ issue: 5 }, { "gate:facts": { ...defaults()["gate:facts"], changedFiles: files } });
+    expect(result.decision).not.toBe("approved");
   });
 
   test("the spec names the sector of a sensitive-sector entry", async () => {
