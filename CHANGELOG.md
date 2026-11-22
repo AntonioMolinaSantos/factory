@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.6 (22 November 2026)
+
+- **The age-path backstop no longer stops on a skill or script named
+  verify-something.** A bare `verify` now counts only as a whole folder
+  (`profile/verify/`); `verification`, `identity`, age, birth dates, `kyc`
+  and minors still count anywhere in a path.
+
 ## 0.6.5 (22 November 2026)
 
 - **A reviewed pull request is no longer refused over a short commit name.**
