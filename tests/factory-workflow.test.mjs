@@ -1478,12 +1478,12 @@ describe("factory workflow: 0.5 measurement", () => {
   test("the report carries the version, the tier and every agent the run spent, by model", async () => {
     const { result, calls } = await run({ issue: 5, merge: true });
     expect(result.version).toBe(PLUGIN.version);
-    expect(result.version).toBe("0.6.5");
+    expect(result.version).toBe("0.6.6");
     expect(result.agents.total).toBe(calls.length);
     const byModel = {};
     for (const c of calls) byModel[c.opts.model || "session"] = (byModel[c.opts.model || "session"] || 0) + 1;
     expect(result.agents.byModel).toEqual(byModel);
-    expect(calls.find((c) => c.label === "report").prompt).toContain('"version": "0.6.5"');
+    expect(calls.find((c) => c.label === "report").prompt).toContain('"version": "0.6.6"');
   });
 
   test("output tokens are what the run spent from the runtime's budget, or null when it gives none", async () => {
@@ -1502,7 +1502,7 @@ describe("factory workflow: 0.5 measurement", () => {
 
   test("a refusal at intake still says which version refused", async () => {
     const { result } = await run({ issue: 5 }, { intake: { repo: "o/r", issues: [issue(5, { closedByOpenPr: true })] } });
-    expect(result.version).toBe("0.6.5");
+    expect(result.version).toBe("0.6.6");
   });
 });
 
@@ -2069,10 +2069,10 @@ describe("factory workflow: 0.6.0 the UI/UX verdict", () => {
     for (const k of ["ownerType", "ownerLogin"]) expect(c.opts.schema.required).toContain(k);
   });
 
-  test("VERSION is 0.6.5, equal to plugin.json", () => {
+  test("VERSION is 0.6.6, equal to plugin.json", () => {
     const plugin = JSON.parse(readFileSync(path.join(root, "plugin", ".claude-plugin", "plugin.json"), "utf8"));
     const version = SCRIPT.match(/const VERSION = '([^']+)'/)[1];
-    expect(version).toBe("0.6.5");
+    expect(version).toBe("0.6.6");
     expect(plugin.version).toBe(version);
   });
 });
@@ -2246,6 +2246,19 @@ describe("factory workflow: 0.6.4 the standing clearance of the adult sector", (
       const { result, labels } = await run({ issue: 5 }, { spec: { ...SPEC_OK, files: [...SPEC_OK.files, f], guardrail: [adult] }, "guardrail:standing": standing(), "guardrail:read": noStop });
       expect(result, f).toMatchObject({ decision: "escalated", label: "ready-for-human" });
       expect(labels, f).not.toContain("guardrail:standing");
+    }
+  });
+
+  test("a verify-named skill or script is not age work; a verify folder and verification files are", async () => {
+    for (const f of [".claude/skills/verify-site/SKILL.md", "scripts/verify-build.mjs", "src/lib/qr/verify.ts"]) {
+      const { labels } = await run({ issue: 5 }, { spec: { ...SPEC_OK, files: [...SPEC_OK.files, f], guardrail: [adult] }, "guardrail:standing": standing() });
+      expect(labels, f).toContain("guardrail:standing");
+      expect(labels, f).toContain("build");
+    }
+    for (const f of ["src/app/[locale]/profile/verify/page.tsx", "src/lib/verification/submit.ts", "supabase/tests/identity_marks_test.sql"]) {
+      const { labels } = await run({ issue: 5 }, { spec: { ...SPEC_OK, files: [...SPEC_OK.files, f], guardrail: [adult] }, "guardrail:standing": standing(), "guardrail:read": noStop });
+      expect(labels, f).not.toContain("guardrail:standing");
+      expect(labels, f).not.toContain("build");
     }
   });
 
