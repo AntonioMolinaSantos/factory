@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.6.5 (22 November 2026)
+
+- **A reviewed pull request is no longer refused over a short commit name.**
+  Two runs handed back clean pull requests with "Codex did not review the
+  head": a fix agent reported the head as a short sha (`3335545`) while
+  Codex's record held the full one, and the check only accepted a short
+  name on Codex's side. One commit under two names now matches either way
+  (`sameCommit`: equal, or one a prefix of the other, both at least 7 hex
+  characters), at every place the script compares commits: Codex on the
+  head, CI, the gate and the merge check.
+- The agents that push (build, fix, plan, plan fix) are asked for the full
+  40-character sha.
+- After the gate, the head is the full sha GitHub returned, so the merge
+  check and `gh pr merge --match-head-commit` never receive a short name.
+
 ## 0.6.4 (22 November 2026)
 
 - **A standing clearance for the adult sector.** A repository whose product
