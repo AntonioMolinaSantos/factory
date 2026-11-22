@@ -1,6 +1,6 @@
 {
   "name": "factory",
-  "version": "0.6.3",
+  "version": "0.6.4",
   "description": "One ready-for-agent GitHub issue to one reviewed pull request to dev: spec, test-first build, a review panel graded P1 and P2, a gate computed in code. Plus the UI/UX grill that approves a design before any screen is built.",
   "author": {
     "name": "Antonio Molina"
