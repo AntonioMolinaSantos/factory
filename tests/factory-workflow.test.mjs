@@ -1478,12 +1478,12 @@ describe("factory workflow: 0.5 measurement", () => {
   test("the report carries the version, the tier and every agent the run spent, by model", async () => {
     const { result, calls } = await run({ issue: 5, merge: true });
     expect(result.version).toBe(PLUGIN.version);
-    expect(result.version).toBe("0.6.4");
+    expect(result.version).toBe("0.6.5");
     expect(result.agents.total).toBe(calls.length);
     const byModel = {};
     for (const c of calls) byModel[c.opts.model || "session"] = (byModel[c.opts.model || "session"] || 0) + 1;
     expect(result.agents.byModel).toEqual(byModel);
-    expect(calls.find((c) => c.label === "report").prompt).toContain('"version": "0.6.4"');
+    expect(calls.find((c) => c.label === "report").prompt).toContain('"version": "0.6.5"');
   });
 
   test("output tokens are what the run spent from the runtime's budget, or null when it gives none", async () => {
@@ -1502,7 +1502,7 @@ describe("factory workflow: 0.5 measurement", () => {
 
   test("a refusal at intake still says which version refused", async () => {
     const { result } = await run({ issue: 5 }, { intake: { repo: "o/r", issues: [issue(5, { closedByOpenPr: true })] } });
-    expect(result.version).toBe("0.6.4");
+    expect(result.version).toBe("0.6.5");
   });
 });
 
@@ -2069,10 +2069,10 @@ describe("factory workflow: 0.6.0 the UI/UX verdict", () => {
     for (const k of ["ownerType", "ownerLogin"]) expect(c.opts.schema.required).toContain(k);
   });
 
-  test("VERSION is 0.6.4, equal to plugin.json", () => {
+  test("VERSION is 0.6.5, equal to plugin.json", () => {
     const plugin = JSON.parse(readFileSync(path.join(root, "plugin", ".claude-plugin", "plugin.json"), "utf8"));
     const version = SCRIPT.match(/const VERSION = '([^']+)'/)[1];
-    expect(version).toBe("0.6.4");
+    expect(version).toBe("0.6.5");
     expect(plugin.version).toBe(version);
   });
 });
@@ -2278,5 +2278,57 @@ describe("factory workflow: 0.6.4 the standing clearance of the adult sector", (
   test("the clearance file sits under the denylist, so the factory never writes it", async () => {
     const { result } = await run({ issue: 5 }, { spec: { ...SPEC_OK, files: [...SPEC_OK.files, "docs/conventions/factory-guardrail.json"] } });
     expect(result.label).toBe("ready-for-human");
+  });
+});
+
+// 0.6.5, 22 November 2026: two runs handed back clean pull requests with
+// "Codex did not review the head": a fix agent reported the head as a short
+// sha ("3335545") and Codex's record held the full one.
+describe("factory workflow: 0.6.5 one commit under two names", () => {
+  const FULL = "33355451a9e7f4e091f524cecd158fd909d2bed4";
+  test("a short head from a fix and a full sha from Codex count as the same commit", async () => {
+    const { result } = await run({ issue: 5 }, {
+      "review:correctness:1": { applicable: true, available: true, findings: [{ severity: "P1", summary: "real bug", file: SPEC_OK.files[0], line: 1, inScope: true }] },
+      "fix:1": (p) => ({ ...fixAll(p), headSha: "3335545" }),
+      "codex:2": { available: true, reviewedSha: FULL, findings: [] },
+      "ci:fix": { checks: "success", headSha: FULL },
+      "head:fix": { headSha: "3335545" },
+      "gate:facts": { base: "dev", headSha: FULL, changedFiles: SPEC_OK.files, checks: "success", mainSha: "m1" },
+      "merge:verify": { base: "dev", headSha: FULL, checks: "success" },
+    });
+    expect(result.reason || "").not.toMatch(/Codex did not review the head/);
+    expect(result.decision).toBe("approved");
+  });
+
+  test("a short head is replaced by the gate's full sha before the merge", async () => {
+    const { result, calls } = await run({ issue: 5, merge: true }, {
+      "review:correctness:1": { applicable: true, available: true, findings: [{ severity: "P1", summary: "real bug", file: SPEC_OK.files[0], line: 1, inScope: true }] },
+      "fix:1": (p) => ({ ...fixAll(p), headSha: "3335545" }),
+      "codex:2": { available: true, reviewedSha: FULL, findings: [] },
+      "gate:facts": { base: "dev", headSha: FULL, changedFiles: SPEC_OK.files, checks: "success", mainSha: "m1" },
+      "merge:verify": { base: "dev", headSha: FULL, checks: "success" },
+      merge: { merged: true, mainSha: "m1" },
+    });
+    expect(result).toMatchObject({ decision: "approved", merged: true });
+    expect(calls.find((c) => c.label === "merge").prompt).toContain(`--match-head-commit ${FULL}`);
+  });
+
+  test("different commits, a too-short name or a non-hex name never match", async () => {
+    for (const [head, seen] of [["3335545", "f5e0f5e2b483a3ca1b5ae0f2326680f0fd6fb302"], ["333", FULL], ["zzzzzzz", "zzzzzzzzzz"], ["", FULL]]) {
+      const { result } = await run({ issue: 5 }, {
+        "review:correctness:1": { applicable: true, available: true, findings: [{ severity: "P1", summary: "real bug", file: SPEC_OK.files[0], line: 1, inScope: true }] },
+        "fix:1": (p) => ({ ...fixAll(p), headSha: head }),
+        "codex:2": { available: true, reviewedSha: seen, findings: [] },
+        "ci:fix": { checks: "success", headSha: head },
+        "head:fix": { headSha: head },
+        "gate:facts": { base: "dev", headSha: head, changedFiles: SPEC_OK.files, checks: "success", mainSha: "m1" },
+      });
+      expect(result.decision, `${head} vs ${seen}`).not.toBe("approved");
+    }
+  });
+
+  test("the agents that push are asked for the full sha", async () => {
+    const { calls } = await run({ issue: 5 });
+    expect(calls.find((c) => c.label === "build").prompt).toContain("the full 40-character commit sha (git rev-parse HEAD), never a short one");
   });
 });
