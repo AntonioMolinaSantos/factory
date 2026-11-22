@@ -1478,12 +1478,12 @@ describe("factory workflow: 0.5 measurement", () => {
   test("the report carries the version, the tier and every agent the run spent, by model", async () => {
     const { result, calls } = await run({ issue: 5, merge: true });
     expect(result.version).toBe(PLUGIN.version);
-    expect(result.version).toBe("0.6.3");
+    expect(result.version).toBe("0.6.4");
     expect(result.agents.total).toBe(calls.length);
     const byModel = {};
     for (const c of calls) byModel[c.opts.model || "session"] = (byModel[c.opts.model || "session"] || 0) + 1;
     expect(result.agents.byModel).toEqual(byModel);
-    expect(calls.find((c) => c.label === "report").prompt).toContain('"version": "0.6.3"');
+    expect(calls.find((c) => c.label === "report").prompt).toContain('"version": "0.6.4"');
   });
 
   test("output tokens are what the run spent from the runtime's budget, or null when it gives none", async () => {
@@ -1502,7 +1502,7 @@ describe("factory workflow: 0.5 measurement", () => {
 
   test("a refusal at intake still says which version refused", async () => {
     const { result } = await run({ issue: 5 }, { intake: { repo: "o/r", issues: [issue(5, { closedByOpenPr: true })] } });
-    expect(result.version).toBe("0.6.3");
+    expect(result.version).toBe("0.6.4");
   });
 });
 
@@ -2069,10 +2069,10 @@ describe("factory workflow: 0.6.0 the UI/UX verdict", () => {
     for (const k of ["ownerType", "ownerLogin"]) expect(c.opts.schema.required).toContain(k);
   });
 
-  test("VERSION is 0.6.3, equal to plugin.json", () => {
+  test("VERSION is 0.6.4, equal to plugin.json", () => {
     const plugin = JSON.parse(readFileSync(path.join(root, "plugin", ".claude-plugin", "plugin.json"), "utf8"));
     const version = SCRIPT.match(/const VERSION = '([^']+)'/)[1];
-    expect(version).toBe("0.6.3");
+    expect(version).toBe("0.6.4");
     expect(plugin.version).toBe(version);
   });
 });
@@ -2156,5 +2156,127 @@ describe("factory workflow: 0.6.3 the owner of a user repository", () => {
   test("one function decides who is a writer: the script reads WRITERS in exactly one place", () => {
     expect(SCRIPT.match(/WRITERS[.]includes/g)).toHaveLength(1);
     expect(SCRIPT).toMatch(/function writer\(/);
+  });
+});
+
+// 0.6.4, 22 November 2026: the owner of OSL cleared the adult sector for good.
+// A standing clearance in the repository's own docs/conventions/factory-guardrail.json
+// on origin/dev answers the adult sector only; every other trigger and sector stops.
+describe("factory workflow: 0.6.4 the standing clearance of the adult sector", () => {
+  const adult = { trigger: "sensitive-sector", sector: "adult", reason: "adult lifestyle community" };
+  const FILE = JSON.stringify({ standingClearance: [{ trigger: "sensitive-sector", sector: "adult", decidedBy: "o", decidedOn: "2026-11-22", reason: "adult industry" }] });
+  const standing = (text = FILE, read = true, more = {}) => ({ read, text, prRead: true, mergedBy: "O", ownerType: "User", ownerLogin: "o", ...more });
+  const noStop = { read: true, stops: [], readyLabelledAt: "2026-11-01T00:00:00Z", ownerType: "User", ownerLogin: "o" };
+
+  test("an adult-sector trip with the repository's clearance builds, without reading the stop history", async () => {
+    const { result, labels, calls } = await run({ issue: 5 }, { spec: { ...SPEC_OK, guardrail: [adult] }, "guardrail:standing": standing() });
+    expect(labels).toContain("build");
+    expect(labels).not.toContain("guardrail:read");
+    expect(result).toMatchObject({ decision: "approved", guardrailStanding: ["sensitive-sector:adult"] });
+    const p = calls.find((c) => c.label === "guardrail:standing").prompt;
+    expect(p).toContain("git show origin/dev:docs/conventions/factory-guardrail.json");
+  });
+
+  test("no file, an unread file, malformed JSON or an entry without who and when stops as before", async () => {
+    const bad = [
+      standing(""),
+      standing(FILE, false),
+      null,
+      standing("{not json"),
+      standing(JSON.stringify({ standingClearance: [{ trigger: "sensitive-sector", sector: "adult" }] })),
+      standing(JSON.stringify({ standingClearance: [{ trigger: "sensitive-sector", sector: "adult", decidedBy: "o", decidedOn: "soon" }] })),
+      standing(JSON.stringify({ standingClearance: [{ trigger: "sensitive-sector", sector: "adult", decidedBy: "o", decidedOn: "2026-13-40" }] })),
+      standing(JSON.stringify({ standingClearance: [{ trigger: "sensitive-sector", sector: "adult", decidedBy: "  ", decidedOn: "2026-11-22" }] })),
+      standing(JSON.stringify({ standingClearance: { trigger: "sensitive-sector", sector: "adult", decidedBy: "o", decidedOn: "2026-11-22" } })),
+      standing("null"),
+      // Fable, in the 0.6.4 review: only the user owner can clear, checked on
+      // GitHub, not on the file's word.
+      standing(JSON.stringify({ standingClearance: [{ trigger: "sensitive-sector", sector: "adult", decidedBy: "collaborator", decidedOn: "2026-11-22" }] })),
+      standing(FILE, true, { mergedBy: "collaborator" }),
+      standing(FILE, true, { prRead: false, mergedBy: "" }),
+      standing(FILE, true, { ownerType: "Organization" }),
+      standing(FILE, true, { ownerLogin: "someone-else" }),
+    ];
+    for (const s of bad) {
+      const { result, labels } = await run({ issue: 5 }, { spec: { ...SPEC_OK, guardrail: [adult] }, "guardrail:standing": s, "guardrail:read": noStop });
+      expect(result, JSON.stringify(s)).toMatchObject({ decision: "escalated", label: "ready-for-human" });
+      expect(labels).not.toContain("build");
+    }
+  });
+
+  test("the file can never clear another sector or another trigger", async () => {
+    const wide = JSON.stringify({ standingClearance: [
+      { trigger: "sensitive-sector", sector: "adult", decidedBy: "o", decidedOn: "2026-11-22" },
+      { trigger: "sensitive-sector", sector: "minors", decidedBy: "o", decidedOn: "2026-11-22" },
+      { trigger: "law", decidedBy: "o", decidedOn: "2026-11-22" },
+    ] });
+    for (const g of [
+      { trigger: "sensitive-sector", sector: "minors", reason: "r" },
+      { trigger: "sensitive-sector", sector: "alcohol", reason: "r" },
+      { trigger: "sensitive-sector", sector: "gambling", reason: "r" },
+      { trigger: "sensitive-sector", sector: "other", reason: "r" },
+      { trigger: "sensitive-sector", reason: "no sector named" },
+      { trigger: "law", reason: "r" },
+      { trigger: "consent", reason: "r" },
+      { trigger: "platform-enforcement", reason: "r" },
+    ]) {
+      const { result, labels } = await run({ issue: 5 }, { spec: { ...SPEC_OK, guardrail: [g] }, "guardrail:standing": standing(wide), "guardrail:read": noStop });
+      expect(result, JSON.stringify(g)).toMatchObject({ decision: "escalated", label: "ready-for-human" });
+      expect(labels).not.toContain("build");
+    }
+  });
+
+  test("adult plus another trigger: the adult part is cleared, the other still stops and is the only one named", async () => {
+    const law = { trigger: "law", reason: "unclear licence" };
+    const { result, labels, calls } = await run({ issue: 5 }, { spec: { ...SPEC_OK, guardrail: [adult, law] }, "guardrail:standing": standing(), "guardrail:read": noStop });
+    expect(result).toMatchObject({ decision: "escalated", label: "ready-for-human", guardrail: [law], guardrailStanding: ["sensitive-sector:adult"] });
+    expect(labels).not.toContain("build");
+    expect(calls.find((c) => c.label === "report").prompt).toContain("- law: unclear licence");
+  });
+
+  test("adult plus minors: the minors entry still stops", async () => {
+    const minors = { trigger: "sensitive-sector", sector: "minors", reason: "touches the age gate" };
+    const { result, labels } = await run({ issue: 5 }, { spec: { ...SPEC_OK, guardrail: [adult, minors] }, "guardrail:standing": standing(), "guardrail:read": noStop });
+    expect(result).toMatchObject({ decision: "escalated", label: "ready-for-human", guardrail: [minors] });
+    expect(labels).not.toContain("build");
+  });
+
+  test("work on age, birth dates, verification or minors is never cleared for good, whatever the label", async () => {
+    for (const f of ["src/lib/validations/dob.ts", "src/app/[locale]/profile/verify/page.tsx", "src/lib/age-gate.ts", "supabase/tests/verification_write_perimeter_test.sql", "src/lib/minors/policy.ts"]) {
+      const { result, labels } = await run({ issue: 5 }, { spec: { ...SPEC_OK, files: [...SPEC_OK.files, f], guardrail: [adult] }, "guardrail:standing": standing(), "guardrail:read": noStop });
+      expect(result, f).toMatchObject({ decision: "escalated", label: "ready-for-human" });
+      expect(labels, f).not.toContain("guardrail:standing");
+    }
+  });
+
+  test("the spec is told that age work always adds a minors entry", async () => {
+    const { calls } = await run({ issue: 5 });
+    expect(calls.find((x) => x.label === "spec").prompt).toMatch(/age, a date of birth, an age or identity check, or anyone under 18 always adds its own minors entry/);
+  });
+
+  test("the clearance read asks who merged the file and who owns the repository", async () => {
+    const { calls } = await run({ issue: 5 }, { spec: { ...SPEC_OK, guardrail: [adult] }, "guardrail:standing": standing() });
+    const c = calls.find((x) => x.label === "guardrail:standing");
+    expect(c.prompt).toContain("gh api repos/o/r/commits/<sha>/pulls");
+    expect(c.prompt).toContain("gh api repos/o/r --jq '.owner.type, .owner.login'");
+    for (const k of ["prRead", "mergedBy", "ownerType", "ownerLogin"]) expect(c.opts.schema.required).toContain(k);
+  });
+
+  test("the gate refuses a branch that changed the clearance file", async () => {
+    const files = [...SPEC_OK.files, "docs/conventions/factory-guardrail.json"];
+    const { result } = await run({ issue: 5 }, { "gate:facts": { ...defaults()["gate:facts"], changedFiles: files } });
+    expect(result.decision).not.toBe("approved");
+  });
+
+  test("the spec names the sector of a sensitive-sector entry", async () => {
+    const { calls } = await run({ issue: 5 });
+    const c = calls.find((x) => x.label === "spec");
+    expect(c.opts.schema.properties.guardrail.items.properties.sector.enum).toEqual(["adult", "alcohol", "gambling", "minors", "other"]);
+    expect(c.prompt).toMatch(/sector naming which one/);
+  });
+
+  test("the clearance file sits under the denylist, so the factory never writes it", async () => {
+    const { result } = await run({ issue: 5 }, { spec: { ...SPEC_OK, files: [...SPEC_OK.files, "docs/conventions/factory-guardrail.json"] } });
+    expect(result.label).toBe("ready-for-human");
   });
 });

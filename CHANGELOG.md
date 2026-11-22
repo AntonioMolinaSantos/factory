@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.6.4 (22 November 2026)
+
+- **A standing clearance for the adult sector.** A repository whose product
+  is in the adult industry tripped the guardrail on every issue. Its owner
+  can now clear that sector for good in `docs/conventions/factory-guardrail.json`
+  on `dev` (format in `plugin/docs/conventions/ai-governance.md`). The run
+  reads it only when the spec names the adult sector, and only that sector is
+  ever cleared: alcohol, gambling, data about minors, law, consent and
+  platform enforcement still stop. Only the user owner can clear: `decidedBy`
+  must be their login and the pull request that last changed the file must
+  have been merged by them, as GitHub records it. A missing, unread or
+  malformed file clears nothing. Age, birth dates, age or identity checks and
+  minors are never cleared: the spec adds a `minors` entry for them, and a
+  change to a path naming them stops whatever the label. The path is under
+  the denylist, so the factory never writes it.
+- The spec names the sector of each `sensitive-sector` entry (`adult`,
+  `alcohol`, `gambling`, `minors`, `other`), and the stop comment shows it.
+- The report adds `guardrailStanding`, the triggers cleared this way.
+
 ## 0.6.3 (21 November 2026)
 
 - **The factory runs from a cloud Claude Code session.** There the GitHub
