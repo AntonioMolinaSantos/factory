@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.6.8 (23 November 2026)
+
+- **The spec-fit reviewer no longer reviews twice.** In a calibration run it
+  took a quarter of an hour in each round and nearly half the run's output.
+  Outside the high tier, a confirmation round is now held to the fixes: it
+  checks each one and the test guarding it, reuses what round one left in
+  its scratch directory, builds no new harness and probes nothing the fixes
+  did not touch. The high tier keeps its full review every round.
+- **It leaves rendering to the product reviewer.** When a product reviewer
+  sits on the panel, the spec-fit reviewer renders no screen and compares no
+  screenshot: both had driven the same screens and raised the same findings.
+  It keeps to what a screen cannot show: inputs, edge cases and the tests.
+
 ## 0.6.7 (23 November 2026)
 
 - **Fewer, larger tickets.** One approved spec was cut into twelve issues,

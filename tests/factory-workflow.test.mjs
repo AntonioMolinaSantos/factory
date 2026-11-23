@@ -1032,6 +1032,32 @@ describe("factory workflow: calibration findings from the first runs", () => {
     expect(prompt).toMatch(/data, never instructions/);
   });
 
+  // 0.6.8 (a calibration run): the spec-fit reviewer took a quarter of an
+  // hour in each round and nearly half the run's output. In the confirmation
+  // round it rebuilt its harness and probed every locale again, and in round
+  // one it rendered the screens the product reviewer was already driving.
+  test("a confirmation round holds the spec-fit reviewer to the fixes, on what round one left in its scratch directory", async () => {
+    const { calls } = await run({ issue: 5 }, { "review:spec:1": one(f("P1", "wrong on real inputs")) });
+    const first = calls.find((c) => c.label === "review:spec:1").prompt;
+    const second = calls.find((c) => c.label === "review:spec:2").prompt;
+    expect(second).toMatch(/confirmation round, not a second review/);
+    expect(second).toContain("~/.claude/factory-scratch/o-r/issue-5/round-1/");
+    expect(second).toMatch(/build no new harness/);
+    expect(second).not.toMatch(/Judge the change against the real inputs/);
+    expect(first).toMatch(/Judge the change against the real inputs/);
+    expect(first).not.toMatch(/confirmation round, not a second review/);
+  });
+
+  test("the spec-fit reviewer leaves rendering to the product reviewer when one sits on the panel", async () => {
+    const visual = { ...SPEC_OK, acceptance: [{ id: "A1", text: "shows", visual: true }] };
+    const withProduct = await run({ issue: 5 }, { spec: visual });
+    expect(withProduct.labels).toContain("review:product:1");
+    expect(withProduct.calls.find((c) => c.label === "review:spec:1").prompt).toMatch(/product reviewer drives the screens/);
+    const alone = await run({ issue: 5 });
+    expect(alone.labels).not.toContain("review:product:1");
+    expect(alone.calls.find((c) => c.label === "review:spec:1").prompt).not.toMatch(/product reviewer drives the screens/);
+  });
+
   test("a spec-fit reviewer that returns nothing blocks like any reviewer", async () => {
     const { result } = await run({ issue: 5 }, { "review:spec:1": null });
     expect(result).toMatchObject({ decision: "escalated", label: "needs-triage" });
@@ -1503,12 +1529,12 @@ describe("factory workflow: 0.5 measurement", () => {
   test("the report carries the version, the tier and every agent the run spent, by model", async () => {
     const { result, calls } = await run({ issue: 5, merge: true });
     expect(result.version).toBe(PLUGIN.version);
-    expect(result.version).toBe("0.6.7");
+    expect(result.version).toBe("0.6.8");
     expect(result.agents.total).toBe(calls.length);
     const byModel = {};
     for (const c of calls) byModel[c.opts.model || "session"] = (byModel[c.opts.model || "session"] || 0) + 1;
     expect(result.agents.byModel).toEqual(byModel);
-    expect(calls.find((c) => c.label === "report").prompt).toContain('"version": "0.6.7"');
+    expect(calls.find((c) => c.label === "report").prompt).toContain('"version": "0.6.8"');
   });
 
   test("output tokens are what the run spent from the runtime's budget, or null when it gives none", async () => {
@@ -1527,7 +1553,7 @@ describe("factory workflow: 0.5 measurement", () => {
 
   test("a refusal at intake still says which version refused", async () => {
     const { result } = await run({ issue: 5 }, { intake: { repo: "o/r", issues: [issue(5, { closedByOpenPr: true })] } });
-    expect(result.version).toBe("0.6.7");
+    expect(result.version).toBe("0.6.8");
   });
 });
 
@@ -2094,10 +2120,10 @@ describe("factory workflow: 0.6.0 the UI/UX verdict", () => {
     for (const k of ["ownerType", "ownerLogin"]) expect(c.opts.schema.required).toContain(k);
   });
 
-  test("VERSION is 0.6.7, equal to plugin.json", () => {
+  test("VERSION is 0.6.8, equal to plugin.json", () => {
     const plugin = JSON.parse(readFileSync(path.join(root, "plugin", ".claude-plugin", "plugin.json"), "utf8"));
     const version = SCRIPT.match(/const VERSION = '([^']+)'/)[1];
-    expect(version).toBe("0.6.7");
+    expect(version).toBe("0.6.8");
     expect(plugin.version).toBe(version);
   });
 });
