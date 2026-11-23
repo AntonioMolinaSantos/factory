@@ -347,8 +347,8 @@ describe("factory workflow: gate and merge", () => {
 
   test("tickets that were not all filed stop the run before the gate", async () => {
     const p2 = (s) => ({ severity: "P2", category: "other", file: "z", line: 1, summary: s, fix: "f", inScope: false });
-    // Two files, so two bundled tickets (method section 3, stage 6): one filed is not all.
-    for (const tickets of [null, { filed: [101] }]) {
+    // Every P2 of the run goes into one ticket (method section 3, stage 6): none filed is not all.
+    for (const tickets of [null, { filed: [] }]) {
       const { result, labels } = await run({ issue: 5, merge: true }, { "review:security:1": { applicable: true, available: true, findings: [p2("a"), { ...p2("b"), file: "y" }] }, tickets });
       expect(result, JSON.stringify(tickets)).toMatchObject({ decision: "escalated", label: "needs-triage" });
       expect(labels).not.toContain("gate:facts");
@@ -678,6 +678,30 @@ describe("factory workflow: spec mode (plan and issues runs)", () => {
       expect(labels).toContain("plan:report");
       expect(labels).not.toContain("plan:review");
     }
+  });
+
+  test("a plan of more than four tasks is handed back: one task per screen or flow", async () => {
+    const many = [1, 2, 3, 4, 5].map((n) => ({ ...T1, id: `T${n}`, title: `t${n}` }));
+    const { result, labels } = await specRun({}, { plan: planOut(many) });
+    expect(result.decision).toBe("plan-invalid");
+    expect(result.problems.join(" ")).toMatch(/more than 4 tasks/);
+    expect(labels).not.toContain("plan:review");
+    const four = await specRun({}, { plan: planOut(many.slice(0, 4)) });
+    expect(four.result.decision).toBe("plan-ready");
+  });
+
+  test("the plan prompt cuts tasks by screen or flow, folding shared groundwork into the first user", async () => {
+    const { calls } = await specRun({});
+    const prompt = calls.find((c) => c.label === "plan").prompt;
+    expect(prompt).toMatch(/one task per screen or user flow/);
+    expect(prompt).toMatch(/at most 4 tasks/);
+    expect(prompt).not.toMatch(/tasks small enough for one pull request each/);
+  });
+
+  test("a merged plan written before the cap still files its issues", async () => {
+    const many = [1, 2, 3, 4, 5].map((n) => ({ ...T1, id: `T${n}`, title: `t${n}` }));
+    const { result } = await issuesRun({}, { "doc:facts": docFacts({ tasks: many }) });
+    expect(result).toMatchObject({ decision: "issues-filed", issues: 5 });
   });
 
   test("a review finding on the plan is fixed once and the tasks are checked again", async () => {
@@ -1455,20 +1479,21 @@ describe("factory workflow: 0.5 review rounds", () => {
   });
 });
 
-describe("factory workflow: 0.5 bundled tickets", () => {
+describe("factory workflow: 0.6.7 one ticket per pull request", () => {
   const p2 = (summary, file) => ({ severity: "P2", category: "other", file, line: 1, summary, fix: "f", inScope: false });
 
-  test("P2 on the same file become one ticket; each file its own", async () => {
+  test("every P2 of the run becomes one ticket, grouped by file inside it", async () => {
     const { calls, result } = await run({ issue: 5 }, {
       "review:security:1": { ...clean, findings: [p2("first", "apps/a.ts"), p2("second", "apps/a.ts"), p2("third", "apps/b.ts")] },
-      tickets: (prompt) => ({ filed: JSON.parse(prompt.slice(prompt.indexOf("BEGIN FINDINGS\n") + 15, prompt.lastIndexOf("\nEND FINDINGS"))).map((_, i) => 100 + i) }),
+      tickets: { filed: [100] },
     });
     const prompt = calls.find((c) => c.label === "tickets").prompt;
     const groups = JSON.parse(prompt.slice(prompt.indexOf("BEGIN FINDINGS\n") + 15, prompt.lastIndexOf("\nEND FINDINGS")));
     expect(groups.map((g) => g.file)).toEqual(["apps/a.ts", "apps/b.ts"]);
     expect(groups[0].findings.map((x) => x.summary)).toEqual(["first", "second"]);
-    expect(prompt).toMatch(/one issue per group/);
-    expect(result).toMatchObject({ decision: "approved", p2Ticketed: 3, tickets: [100, 101] });
+    expect(prompt).toMatch(/exactly one issue/);
+    expect(prompt).not.toMatch(/one issue per group/);
+    expect(result).toMatchObject({ decision: "approved", p2Ticketed: 3, tickets: [100] });
   });
 });
 
@@ -1478,12 +1503,12 @@ describe("factory workflow: 0.5 measurement", () => {
   test("the report carries the version, the tier and every agent the run spent, by model", async () => {
     const { result, calls } = await run({ issue: 5, merge: true });
     expect(result.version).toBe(PLUGIN.version);
-    expect(result.version).toBe("0.6.6");
+    expect(result.version).toBe("0.6.7");
     expect(result.agents.total).toBe(calls.length);
     const byModel = {};
     for (const c of calls) byModel[c.opts.model || "session"] = (byModel[c.opts.model || "session"] || 0) + 1;
     expect(result.agents.byModel).toEqual(byModel);
-    expect(calls.find((c) => c.label === "report").prompt).toContain('"version": "0.6.6"');
+    expect(calls.find((c) => c.label === "report").prompt).toContain('"version": "0.6.7"');
   });
 
   test("output tokens are what the run spent from the runtime's budget, or null when it gives none", async () => {
@@ -1502,7 +1527,7 @@ describe("factory workflow: 0.5 measurement", () => {
 
   test("a refusal at intake still says which version refused", async () => {
     const { result } = await run({ issue: 5 }, { intake: { repo: "o/r", issues: [issue(5, { closedByOpenPr: true })] } });
-    expect(result.version).toBe("0.6.6");
+    expect(result.version).toBe("0.6.7");
   });
 });
 
@@ -2069,10 +2094,10 @@ describe("factory workflow: 0.6.0 the UI/UX verdict", () => {
     for (const k of ["ownerType", "ownerLogin"]) expect(c.opts.schema.required).toContain(k);
   });
 
-  test("VERSION is 0.6.6, equal to plugin.json", () => {
+  test("VERSION is 0.6.7, equal to plugin.json", () => {
     const plugin = JSON.parse(readFileSync(path.join(root, "plugin", ".claude-plugin", "plugin.json"), "utf8"));
     const version = SCRIPT.match(/const VERSION = '([^']+)'/)[1];
-    expect(version).toBe("0.6.6");
+    expect(version).toBe("0.6.7");
     expect(plugin.version).toBe(version);
   });
 });

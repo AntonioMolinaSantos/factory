@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.6.7 (23 November 2026)
+
+- **Fewer, larger tickets.** One approved spec was cut into twelve issues,
+  each paying the whole review panel, plus a follow-up ticket per file with
+  P2 findings. The plan stage now cuts one task per screen or user flow, a
+  slice a user can see working end to end, with shared groundwork (tokens,
+  fonts, a shared component) folded into the first task that needs it. A
+  plan of more than four tasks is handed back on its pull request. Plans
+  merged before this release still file their issues.
+- **One follow-up ticket per pull request.** Every P2 that survives the
+  re-grade goes into a single issue linking the pull request, grouped by file
+  inside it, in place of one issue per file.
+
 ## 0.6.6 (22 November 2026)
 
 - **The age-path backstop no longer stops on a skill or script named
