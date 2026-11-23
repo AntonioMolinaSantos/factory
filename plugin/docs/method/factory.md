@@ -107,7 +107,7 @@ a pull request's commit in the session checkout and left it detached there.
 | 3 | Review | The tier's panel and the Codex collection, all in parallel | Section 4. Each returns findings graded P1 or P2, each marked inside or outside the spec's scope. | Findings |
 | 4 | Fix | Opus, high effort, own worktree | Round one: fixes every real finding inside the spec's scope, P1 and P2 (`review-loop.md`: round one fixes everything real), with a test for each correctness fix. Every later fix round: the P1 the round before found. Pushes. | The next review round, when it pushed anything; a red local run after the push follows the same CI rule as the build |
 | 5 | Re-grade | Opus, high effort | Every P2 bound for a ticket is checked on the head commit first: one the head already fixes is dropped (counted `p2Stale`); one that meets the P1 rule is promoted (`p1Promoted`) and gets a fix round when it is inside the scope, or escalates when it is not; the rest stay P2. A candidate the re-grade leaves out stays P2. | Tickets to file, or more work |
-| 6 | Tickets | Haiku, medium effort | Files the P2 that survived the re-grade as issues labelled `needs-triage` plus `bug` or `enhancement`, never a severity (`issues.md`: severity is set by whoever triages, never by automation), linking the pull request. Findings on the same file go into one issue, so related small fixes are triaged and built together rather than one run each. | Issue numbers |
+| 6 | Tickets | Haiku, medium effort | Files the P2 that survived the re-grade as issues labelled `needs-triage` plus `bug` or `enhancement`, never a severity (`issues.md`: severity is set by whoever triages, never by automation), linking the pull request. Every P2 of the run goes into one issue, grouped by file inside it, so a pull request's follow-ups are triaged and built together in one run rather than one run each. | Issue numbers |
 | 7 | Approver | Opus, high effort | Section 5. | Approve or escalate |
 
 A review round after round one runs only when the fix stage before it pushed,
@@ -337,14 +337,20 @@ not be confirmed. No factory build can create that state by itself:
 
 1. **Plan.** Opus, high effort, writes
    `docs/superpowers/plans/<date>-<slug>.md` on a branch `docs/plan-<slug>`,
-   ending with a fenced `factory-tasks` JSON block: one entry per task with
+   cut one task per screen or user flow, each a slice a user can see working
+   end to end, at most 4 tasks. Shared groundwork (tokens, fonts, a shared
+   component, plumbing) goes inside the first task that needs it, never in a
+   task of its own: every issue pays the whole review panel, and one spec cut
+   into twelve issues spent it twelve times on groundwork no user sees. A spec
+   that needs more than four slices is too big for one plan. The plan ends
+   with a fenced `factory-tasks` JSON block: one entry per task with
    `id` (T1, T2, ...), `title`, `goal`, `acceptance` (testable criteria,
    `visual` flagged), `files`, `dependsOn` (task ids) and `kind`. It pushes
    only its branch, opens a pull request to `dev` with that one file, and posts
    `@codex review`.
 2. **Checks in code** on what the plan stage returned, before any review:
    unique task ids, canonical files, acceptance present, known dependencies,
-   no cycle, the plan path under `docs/superpowers/plans/`, the branch named
+   no cycle, at most 4 tasks (new plans only: a plan merged before still files), the plan path under `docs/superpowers/plans/`, the branch named
    `docs/plan-<slug>`. A plan that fails is handed back on its pull request.
 3. **Review, one round** (a design document, `review-loop.md`): a Fable plan
    reviewer and the Codex collection, which also reads the pull request's base,
